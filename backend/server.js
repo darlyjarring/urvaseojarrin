@@ -14,7 +14,7 @@ const io = new Server(server, { cors: { origin: '*' } });
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect('mongodb+srv://USUARIO:PASSWORD@cluster0.mongodb.net/urvaseo?retryWrites=true&w=majority', {
+mongoose.connect('mongodb+srv://urvaseo_user:KDLjar-*90@cluster0.mongodb.net/urvaseo?retryWrites=true&w=majority', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 });
