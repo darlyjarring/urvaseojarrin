@@ -1,93 +1,51 @@
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+require("dotenv").config();
 
-const express = require('express');
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const cors = require('cors');
-const http = require('http');
-const { Server } = require('socket.io');
+const User = require("./models/User");
+const Reporte = require("./models/Reporte");
+const Ruta = require("./models/Ruta");
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
-
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect('mongodb+srv://urvaseo_user:KDLjar-*90@cluster0.mongodb.net/urvaseo?retryWrites=true&w=majority', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
+// Conexión a MongoDB Atlas
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ Conectado a MongoDB Atlas"))
+  .catch(err => console.error("❌ Error de conexión:", err));
+
+// ------------------ ENDPOINTS ------------------
+
+// Login simple
+app.post("/login", async (req, res) => {
+  const { username, password } = req.body;
+  const user = await User.findOne({ username, password });
+  if (!user) return res.status(401).json({ error: "Credenciales inválidas" });
+  res.json({ role: user.role, username: user.username });
 });
 
-const userSchema = new mongoose.Schema({
-  nombre: String,
-  email: String,
-  password: String,
-  rol: String
-});
-const Usuario = mongoose.model('Usuario', userSchema);
-
-const actividadSchema = new mongoose.Schema({
-  chofer: String,
-  lat: Number,
-  lng: Number,
-  estado: String,
-  zona: String,
-  timestamp: { type: Date, default: Date.now }
-});
-const Actividad = mongoose.model('Actividad', actividadSchema);
-
-app.post('/registro', async (req, res) => {
-  const { nombre, email, password, rol } = req.body;
-  const hash = await bcrypt.hash(password, 10);
-  const user = new Usuario({ nombre, email, password: hash, rol });
-  await user.save();
-  res.json({ message: 'Usuario registrado' });
+// Reporte de chofer
+app.post("/reporte", async (req, res) => {
+  const { choferId, ubicacion, estado } = req.body;
+  const nuevoReporte = new Reporte({ choferId, ubicacion, estado });
+  await nuevoReporte.save();
+  res.json({ ok: true, msg: "Reporte recibido" });
 });
 
-app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  const user = await Usuario.findOne({ email });
-  if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
-  const isValid = await bcrypt.compare(password, user.password);
-  if (!isValid) return res.status(401).json({ message: 'Contraseña incorrecta' });
-  const token = jwt.sign({ id: user._id, rol: user.rol, nombre: user.nombre }, 'secret', { expiresIn: '8h' });
-  res.json({ token, rol: user.rol, nombre: user.nombre });
+// Supervisor asigna ruta
+app.post("/ruta", async (req, res) => {
+  const { supervisorId, choferId, puntos } = req.body;
+  const nuevaRuta = new Ruta({ supervisorId, choferId, puntos });
+  await nuevaRuta.save();
+  res.json({ ok: true, msg: "Ruta asignada" });
 });
 
-const auth = (req, res, next) => {
-  const token = req.headers['authorization'];
-  if (!token) return res.status(401).json({ message: 'No autorizado' });
-  try {
-    const data = jwt.verify(token, 'secret');
-    req.user = data;
-    next();
-  } catch (err) { return res.status(401).json({ message: 'Token inválido' }); }
-};
-
-app.post('/actividad', auth, async (req, res) => {
-  const { lat, lng, estado, zona } = req.body;
-  const actividad = new Actividad({ chofer: req.user.nombre, lat, lng, estado, zona });
-  await actividad.save();
-  if (estado === 'Robo' || estado === 'Daño' || estado === 'No cumplida') {
-    io.emit('incidente', { chofer: req.user.nombre, estado, lat, lng });
-  }
-  res.json({ message: 'Actividad registrada' });
+// Ver reportes
+app.get("/reportes", async (req, res) => {
+  const reportes = await Reporte.find();
+  res.json(reportes);
 });
 
-app.get('/actividades', auth, async (req, res) => {
-  if (req.user.rol !== 'Supervisor') return res.status(403).json({ message: 'Acceso denegado' });
-  const actividades = await Actividad.find();
-  res.json(actividades);
-});
-
-app.get('/indicadores', auth, async (req, res) => {
-  const total = await Actividad.countDocuments();
-  const cumplidas = await Actividad.countDocuments({ estado: 'Recolectando' });
-  const robos = await Actividad.countDocuments({ estado: 'Robo' });
-  const daños = await Actividad.countDocuments({ estado: 'Daño' });
-  const noCumplidas = await Actividad.countDocuments({ estado: 'No cumplida' });
-  res.json({ total, cumplidas, robos, daños, noCumplidas });
-});
-
-server.listen(3000, () => console.log('Servidor corriendo en puerto 3000'));
+app.listen(4000, () => console.log("🚀 Backend corriendo en puerto 4000"));
