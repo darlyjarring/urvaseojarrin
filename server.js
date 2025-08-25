@@ -9,7 +9,7 @@ const User = require("./models/User");
 const Reporte = require("./models/Reporte");
 const Ruta = require("./models/Ruta");
 const Tarea = require("./models/Tarea");
-const Placa = require(".module/Placa");
+const Placa = require("./module/Placa");
 const Asignacion = require("./models/Asignacion");
 
 // -------------------- CONFIG APP --------------------
