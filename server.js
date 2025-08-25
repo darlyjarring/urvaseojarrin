@@ -101,6 +101,29 @@ app.get("/reportes", async (req, res) => {
   }
 });
 
+// Registro de usuario
+app.post("/register", async (req, res) => {
+  try {
+    const { username, password, role } = req.body;
+
+    // Validar datos
+    if (!username || !password || !role) {
+      return res.status(400).json({ error: "Faltan datos (username, password, role)" });
+    }
+
+    // Crear usuario
+    const newUser = new User({ username, password, role });
+    await newUser.save();
+
+    res.json({ ok: true, msg: "Usuario registrado con éxito" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al registrar usuario" });
+  }
+});
+
+
+
 // -------------------- PUERTO --------------------
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`🚀 Backend corriendo en puerto ${PORT}`));
