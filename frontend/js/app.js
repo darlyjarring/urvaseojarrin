@@ -1,5 +1,4 @@
-const API = "https://urvaseo-backend.onrender.com";
-
+const API = "https://urvaseo-backend.onrender.com"; 
 
 async function login() {
   const username = document.getElementById("username").value;
