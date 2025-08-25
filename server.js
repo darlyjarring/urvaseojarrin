@@ -191,6 +191,34 @@ app.get("/placas", async (req, res) => {
   }
 });
 
+// ----------------- TURNOS ---------------------
+const Asignacion = require("./models/Asignacion");
+
+app.post("/login", async (req, res) => {
+  try {
+    const { username, password, placa } = req.body;
+    const user = await User.findOne({ username, password });
+
+    if (!user) return res.status(401).json({ error: "Credenciales inválidas" });
+    if (!placa) return res.status(400).json({ error: "Debe indicar la placa asignada" });
+
+    // Detectar turno según hora actual
+    const hora = new Date().getHours();
+    let turno;
+    if (hora >= 7 && hora < 15) turno = "07:00-15:00";
+    else if (hora >= 15 && hora < 23) turno = "15:00-23:00";
+    else turno = "23:00-07:00";
+
+    // Registrar asignación del chofer a la placa
+    const asignacion = new Asignacion({ choferId: user._id, placa, turno });
+    await asignacion.save();
+
+    res.json({ role: user.role, username: user.username, turno, placa });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error en login" });
+  }
+});
 
 // -------------------- PUERTO --------------------
 const PORT = process.env.PORT || 4000;
