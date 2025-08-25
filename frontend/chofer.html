@@ -23,8 +23,8 @@
     const API = "https://urvaseo-backend.onrender.com";
 
     // Obtener datos de chofer logueado
-    const choferId = localStorage.getItem("choferId") || "chofer_demo"; // ⚠️ reemplazar al hacer login real
-    const placa = localStorage.getItem("placa") || "ABC-123";
+    const choferId = localStorage.getItem("choferId"); // ⚠️ reemplazar al hacer login real
+    const placa = localStorage.getItem("placa") ;
     const turno = localStorage.getItem("turno") || "07:00-15:00";
 
     const map = L.map('map').setView([-2.2, -79.9], 13);
