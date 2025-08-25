@@ -2,35 +2,48 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Chofer - URVASEO</title>
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <title>Chofer - Ruta de Recolección</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    #map { height: 100vh; }
+    #map { height: 90vh; width: 100%; }
   </style>
 </head>
 <body>
-  <h2>Panel Chofer 🚚</h2>
+  <h2>Ruta asignada de hoy</h2>
   <div id="map"></div>
 
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    const map = L.map('map').setView([-2.2, -79.9], 13);
+    const map = L.map('map').setView([-2.2, -79.9], 13); // Ejemplo Guayaquil
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
-    }).addTo(map);
+    // Ejemplo: puntos de recolección asignados
+    const puntos = [
+      { lat: -2.196, lng: -79.880, estado: "pendiente" },
+      { lat: -2.200, lng: -79.890, estado: "pendiente" }
+    ];
 
-    // Obtener chofer actual (ejemplo: desde sessionStorage o token)
-    const usuario = sessionStorage.getItem("usuario");
+    puntos.forEach((p, i) => {
+      const marker = L.marker([p.lat, p.lng]).addTo(map);
+      marker.bindPopup(`
+        <b>Punto ${i+1}</b><br>
+        Estado: ${p.estado}<br>
+        <button onclick="marcarRecogido(${i})">Recogido</button>
+        <button onclick="marcarIncidencia(${i}, 'Daño')">Daño</button>
+        <button onclick="marcarIncidencia(${i}, 'Robo')">Robo</button>
+      `);
+    });
 
-    fetch(`/tareas?chofer=${usuario}`)
-      .then(res => res.json())
-      .then(tareas => {
-        tareas.forEach(t => {
-          L.marker([t.lat, t.lng]).addTo(map)
-            .bindPopup(`<b>${t.descripcion}</b>`);
-        });
-      });
+    function marcarRecogido(i) {
+      alert("Contenedor " + (i+1) + " marcado como recogido ✅");
+      // Aquí mandamos update al backend con fetch
+    }
+
+    function marcarIncidencia(i, tipo) {
+      alert("Reporte enviado: " + tipo);
+      // Aquí mandamos el reporte al backend
+    }
   </script>
 </body>
 </html>
+
