@@ -220,6 +220,55 @@ app.post("/login", async (req, res) => {
   }
 });
 
+// --------------- CHOFERES ACTIVOS}
+
+// Listar choferes activos (con placa y turno asignado)
+app.get("/supervisor/choferes-activos", async (req, res) => {
+  try {
+    const choferes = await Asignacion.find({})
+      .populate("choferId", "username")
+      .populate("placa", "placa")
+      .sort({ fecha: -1 })
+      .limit(20);
+
+    const resultado = choferes.map(c => ({
+      _id: c.choferId._id,
+      nombre: c.choferId.username,
+      placa: c.placa,
+      turno: c.turno
+    }));
+
+    res.json(resultado);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error obteniendo choferes activos" });
+  }
+});
+
+// CHOFERES TAREA SUPERVIOR VISUALIZA
+// Listar tareas de un chofer específico
+app.get("/supervisor/tareas/:choferId", async (req, res) => {
+  try {
+    const { choferId } = req.params;
+
+    // Primero, encontramos la asignación para obtener la placa y el turno del chofer
+    const asignacion = await Asignacion.findOne({ choferId }).sort({ fecha: -1 });
+
+    if (!asignacion) {
+      return res.status(404).json({ error: "No se encontró una asignación para este chofer" });
+    }
+
+    const { placa, turno } = asignacion;
+
+    // Luego, buscamos las tareas asignadas a esa placa y turno
+    const tareas = await Tarea.find({ placa, turno });
+
+    res.json(tareas);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error obteniendo las tareas del chofer" });
+  }
+});
 // -------------------- PUERTO --------------------
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`🚀 Backend corriendo en puerto ${PORT}`));
