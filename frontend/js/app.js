@@ -1,84 +1,93 @@
 const API = "https://urvaseo-backend.onrender.com";
+let placaSeleccionada = null;
 
-async function verificarRol() {
-  const username = document.getElementById("username").value;
-  const password = document.getElementById("password").value;
+document.getElementById("username").addEventListener("keyup", async (e) => {
+  if (e.key === 'Enter') {
+    const username = document.getElementById("username").value;
+    if (username.trim() === "") return;
 
-  try {
-    const res = await fetch(`${API}/login`, {
+    const res = await fetch(`${API}/check-role`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ username })
     });
-    const data = await res.json();
 
-    if (!res.ok) {
-      alert(data.error);
-      return;
-    }
-
-    if (data.role === "chofer") {
-      // Si el rol es chofer, mostramos el campo para la placa
-      const loginButton = document.getElementById("loginButton");
-      loginButton.innerText = "Ingresar";
-      loginButton.onclick = loginConPlaca; // Cambia la función del botón
-      
-      const placaBox = document.createElement("div");
-      placaBox.className = "form-box";
-      placaBox.innerHTML = '<input id="placa" placeholder="Placa del vehículo">';
-      document.querySelector('body > h1').after(placaBox);
-
-      // Guardamos la información del chofer temporalmente
-      localStorage.setItem("temp_choferData", JSON.stringify(data));
-      alert("Por favor, ingresa la placa de tu vehículo y presiona 'Ingresar'.");
+    if (res.ok) {
+      const data = await res.json();
+      if (data.role === "chofer") {
+        document.getElementById("passwordBox").classList.add("hidden");
+        document.getElementById("loginButton").classList.add("hidden");
+        document.getElementById("placaInputBox").classList.remove("hidden");
+        cargarPlacasActivas();
+      } else {
+        document.getElementById("passwordBox").classList.remove("hidden");
+        document.getElementById("loginButton").classList.remove("hidden");
+        document.getElementById("placaInputBox").classList.add("hidden");
+      }
     } else {
-      // Si no es chofer, completamos el login directamente
-      manejarLoginExitoso(data);
+      alert("Usuario no encontrado.");
     }
-  } catch (err) {
-    console.error("Error al verificar el rol:", err);
-    alert("Error de conexión. Intenta de nuevo más tarde.");
   }
+});
+
+// Cargar y filtrar placas activas
+async function cargarPlacasActivas() {
+  const res = await fetch(`${API}/placas`);
+  const placas = await res.json();
+  const placaInput = document.getElementById("placa");
+  const placaList = document.getElementById("placa-list");
+
+  // Filtrado dinámico
+  placaInput.addEventListener("keyup", () => {
+    const query = placaInput.value.toLowerCase();
+    placaList.innerHTML = "";
+    placas.filter(p => p.placa.toLowerCase().includes(query))
+      .forEach(p => {
+        const li = document.createElement("li");
+        li.innerText = p.placa;
+        li.addEventListener("click", () => {
+          placaInput.value = p.placa;
+          placaSeleccionada = p.placa;
+          placaList.innerHTML = "";
+          document.getElementById("passwordBox").classList.remove("hidden");
+          document.getElementById("loginButton").classList.remove("hidden");
+        });
+        placaList.appendChild(li);
+      });
+  });
 }
 
-async function loginConPlaca() {
-  const placa = document.getElementById("placa").value;
-  if (!placa) {
-    alert("Debes ingresar la placa del vehículo 🚛");
-    return;
+// Lógica de login
+async function login() {
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+  const placa = placaSeleccionada;
+
+  if (username.trim() === "" || password.trim() === "") {
+    return alert("Todos los campos son obligatorios.");
   }
-  
-  const tempChoferData = JSON.parse(localStorage.getItem("temp_choferData"));
   
   const res = await fetch(`${API}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      username: tempChoferData.nombre,
-      password: "", // La contraseña ya fue validada
-      placa: placa
-    })
+    body: JSON.stringify({ username, password, placa })
   });
-  
+
   const data = await res.json();
+
   if (data.ok) {
-    manejarLoginExitoso(data);
+    if (data.role === "chofer") {
+      localStorage.setItem("choferId", data.id);
+      localStorage.setItem("chofer", data.nombre);
+      localStorage.setItem("placa", data.placa);
+      localStorage.setItem("turno", data.turno);
+      window.location = "chofer.html";
+    } else if (data.role === "supervisor") {
+      window.location = "supervisor.html";
+    } else if (data.role === "admin") {
+      window.location = "admin.html";
+    }
   } else {
     alert(data.error);
   }
-}
-
-function manejarLoginExitoso(data) {
-  if (data.role === "chofer") {
-    localStorage.setItem("choferId", data.id);
-    localStorage.setItem("chofer", data.nombre);
-    localStorage.setItem("placa", data.placa);
-    localStorage.setItem("turno", data.turno);
-    window.location = "chofer.html";
-  } else if (data.role === "supervisor") {
-    window.location = "supervisor.html";
-  } else if (data.role === "admin") {
-    window.location = "admin.html";
-  }
-  localStorage.removeItem("temp_choferData");
 }
