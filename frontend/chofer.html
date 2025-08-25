@@ -1,80 +1,36 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>URVASEO – Chofer</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <style>#map{height:400px;}</style>
+  <meta charset="UTF-8">
+  <title>Chofer - URVASEO</title>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    #map { height: 100vh; }
+  </style>
 </head>
 <body>
-<h2>Chofer URVASEO</h2>
-
-<div id="login">
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="pass" placeholder="Contraseña">
-  <button onclick="login()">Login</button>
-</div>
-
-<div id="app" style="display:none;">
-  <select id="zona">
-    <option value="Zona1">Zona 1</option>
-    <option value="Zona2">Zona 2</option>
-  </select>
+  <h2>Panel Chofer 🚚</h2>
   <div id="map"></div>
-  <button onclick="registrar('Recolectando')">Recolectando</button>
-  <button onclick="registrar('Robo')">Robo</button>
-  <button onclick="registrar('Daño')">Daño</button>
-  <button onclick="registrar('No cumplida')">No cumplida</button>
-</div>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script>
-let map, marker, token;
+  <script>
+    const map = L.map('map').setView([-2.2, -79.9], 13);
 
-function login() {
-  fetch('http://localhost:3000/login',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      email:document.getElementById('email').value,
-      password:document.getElementById('pass').value
-    })
-  })
-  .then(res=>res.json())
-  .then(data=>{
-    if(data.token){
-      token = data.token;
-      document.getElementById('login').style.display='none';
-      document.getElementById('app').style.display='block';
-      initMap();
-    } else alert(data.message);
-  });
-}
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
 
-function initMap(){
-  map = L.map('map').setView([0.1807,-78.4678],13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {}).addTo(map);
-}
+    // Obtener chofer actual (ejemplo: desde sessionStorage o token)
+    const usuario = sessionStorage.getItem("usuario");
 
-function registrar(estado){
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(async pos=>{
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-      const zona = document.getElementById('zona').value;
-
-      if(marker) map.removeLayer(marker);
-      marker = L.marker([lat,lng]).addTo(map).bindPopup(estado).openPopup();
-
-      await fetch('http://localhost:3000/actividad',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':token},
-        body:JSON.stringify({lat,lng,estado,zona})
+    fetch(`/tareas?chofer=${usuario}`)
+      .then(res => res.json())
+      .then(tareas => {
+        tareas.forEach(t => {
+          L.marker([t.lat, t.lng]).addTo(map)
+            .bindPopup(`<b>${t.descripcion}</b>`);
+        });
       });
-
-      alert('Actividad registrada: '+estado);
-    });
-  } else alert('GPS no disponible');
-}
-</script>
+  </script>
 </body>
 </html>
