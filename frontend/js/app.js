@@ -1,11 +1,12 @@
 const API = "https://urvaseo-backend.onrender.com";
 let placaSeleccionada = null;
 
-document.getElementById("username").addEventListener("keyup", async (e) => {
-  if (e.key === 'Enter') {
-    const username = document.getElementById("username").value;
-    if (username.trim() === "") return;
+// Evento que se dispara al hacer clic/tocar o presionar tab en el campo de contraseña
+document.getElementById("password").addEventListener("focus", async () => {
+  const username = document.getElementById("username").value;
+  if (username.trim() === "") return;
 
+  try {
     const res = await fetch(`${API}/check-role`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -15,18 +16,18 @@ document.getElementById("username").addEventListener("keyup", async (e) => {
     if (res.ok) {
       const data = await res.json();
       if (data.role === "chofer") {
-        document.getElementById("passwordBox").classList.add("hidden");
-        document.getElementById("loginButton").classList.add("hidden");
         document.getElementById("placaInputBox").classList.remove("hidden");
         cargarPlacasActivas();
       } else {
-        document.getElementById("passwordBox").classList.remove("hidden");
-        document.getElementById("loginButton").classList.remove("hidden");
         document.getElementById("placaInputBox").classList.add("hidden");
       }
     } else {
-      alert("Usuario no encontrado.");
+      // Si el usuario no existe, ocultamos todo lo que se necesite
+      document.getElementById("placaInputBox").classList.add("hidden");
     }
+  } catch (err) {
+    console.error("Error al verificar rol:", err);
+    document.getElementById("placaInputBox").classList.add("hidden");
   }
 });
 
@@ -49,8 +50,6 @@ async function cargarPlacasActivas() {
           placaInput.value = p.placa;
           placaSeleccionada = p.placa;
           placaList.innerHTML = "";
-          document.getElementById("passwordBox").classList.remove("hidden");
-          document.getElementById("loginButton").classList.remove("hidden");
         });
         placaList.appendChild(li);
       });
