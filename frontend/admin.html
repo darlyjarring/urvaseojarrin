@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>URVASEO - Panel de Administración</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #f0f2f5; }
     .navbar {
@@ -41,6 +42,11 @@
     tr:nth-child(even) { background-color: #f9f9f9; }
     .status-active { color: green; font-weight: bold; }
     .status-inactive { color: red; font-weight: bold; }
+    
+    /* Estilos específicos para la sección de rutas */
+    #map { height: 500px; width: 100%; border-radius: 8px; border: 2px solid #ddd; margin-bottom: 20px; }
+    .form-container { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .punto-item { background: #f9f9f9; border: 1px solid #ddd; padding: 10px; margin-bottom: 5px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
   </style>
 </head>
 <body>
@@ -77,7 +83,19 @@
 
     <div id="rutas-section" class="section">
       <h2>Gestión de Rutas</h2>
-      <p>Este es el espacio para la gestión de rutas con el mapa.</p>
+      <div class="form-container">
+        <h3>Crear Nueva Ruta</h3>
+        <input type="text" id="nombreRuta" placeholder="Nombre de la ruta (Ej: Barrio Cuba)">
+        <p>Haz clic en el mapa para agregar puntos de recolección.</p>
+      </div>
+      
+      <div id="map"></div>
+
+      <div class="form-container">
+        <h3>Puntos de Recolección</h3>
+        <div id="puntosContainer"></div>
+        <button onclick="guardarRuta()">Guardar Ruta</button>
+      </div>
     </div>
 
     <div id="tareas-section" class="section">
@@ -111,6 +129,7 @@
     </div>
   </div>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="js/admin.js"></script>
 </body>
 </html>
