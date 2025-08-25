@@ -123,6 +123,33 @@ app.post("/register", async (req, res) => {
 });
 
 
+// --------------------REGISTRAS NUEVAS PLACAS ------------------
+const Placa = require("./models/Placa");
+
+// Crear una nueva placa
+app.post("/placas", async (req, res) => {
+  try {
+    const { placa, marca, modelo } = req.body;
+    const nuevaPlaca = new Placa({ placa, marca, modelo });
+    await nuevaPlaca.save();
+    res.json({ ok: true, msg: "Vehículo registrado" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error registrando la placa" });
+  }
+});
+
+// Obtener todas las placas
+app.get("/placas", async (req, res) => {
+  try {
+    const placas = await Placa.find();
+    res.json(placas);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error obteniendo las placas" });
+  }
+});
+
 
 // -------------------- PUERTO --------------------
 const PORT = process.env.PORT || 4000;
