@@ -4,19 +4,20 @@
   <meta charset="UTF-8">
   <title>URVASEO - Login</title>
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; }
+    .form-box { margin-bottom: 10px; }
+  </style>
 </head>
 <body>
   <h1>Login</h1>
   <div class="form-box">
-    <input id="username" placeholder="Usuario">
+    <input id="username" placeholder="Correo de Usuario">
   </div>
   <div class="form-box">
     <input id="password" type="password" placeholder="Contraseña">
   </div>
-  <div class="form-box hidden" id="placaBox">
-    <input id="placa" placeholder="Placa del vehículo">
-  </div>
-  <button onclick="login()">Ingresar</button>
+  <button id="loginButton" onclick="verificarRol()">Continuar</button>
   <script src="app.js"></script>
 </body>
 </html>
