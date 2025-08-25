@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Placas</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #f2f2f2; }
+    .activo { color: green; font-weight: bold; }
+    .inactivo { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Administración de Placas</h1>
+
+  <h2>Registrar nueva placa</h2>
+  <input id="nuevaPlaca" placeholder="Ej: ABC-1234">
+  <select id="estadoPlaca">
+    <option value="activo">Activo</option>
+    <option value="inactivo">Inactivo</option>
+  </select>
+  <button onclick="registrarPlaca()">Registrar</button>
+
+  <h2>Listado de Placas</h2>
+  <table id="tablaPlacas">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Placa</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script src="placa.js"></script>
+</body>
+</html>
