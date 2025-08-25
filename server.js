@@ -35,6 +35,11 @@ app.get("/supervisor.html", (req, res) => {
   res.sendFile(__dirname + "/frontend/supervisor.html");
 });
 
+app.get("/admin.html", (req, res) => {
+  res.sendFile(__dirname + "/frontend/admin.html");
+});
+
+
 // -------------------- CONEXIÓN A MONGODB --------------------
 const mongoUri = process.env.MONGO_URI;
 if (!mongoUri) {
