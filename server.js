@@ -5,12 +5,12 @@ const cors = require("cors");
 require("dotenv").config();
 
 // -------------------- MODELOS --------------------
-const User = require("./User");
-const Reporte = require("./Reporte");
-const Ruta = require("./Ruta");
-const Tarea = require("./Tarea");
+const User = require(".models/User");
+const Reporte = require(".models/Reporte");
+const Ruta = require(".models/Ruta");
+const Tarea = require(".models/Tarea");
 const Placa = require("./Placa");
-const Asignacion = require("./Asignacion");
+const Asignacion = require(".models/Asignacion");
 
 // -------------------- CONFIG APP --------------------
 const app = express();
