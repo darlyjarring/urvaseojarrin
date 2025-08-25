@@ -5,12 +5,12 @@ const cors = require("cors");
 require("dotenv").config();
 
 // -------------------- MODELOS --------------------
-const User = require("./models/User");
-const Reporte = require("./models/Reporte");
-const Ruta = require("./models/Ruta");
-const Tarea = require("./models/Tarea");
-const Placa = require("./js/placa");
-const Asignacion = require("./models/Asignacion");
+const User = require("./User");
+const Reporte = require("./Reporte");
+const Ruta = require("./Ruta");
+const Tarea = require("./Tarea");
+const Placa = require("./Placa");
+const Asignacion = require("./Asignacion");
 
 // -------------------- CONFIG APP --------------------
 const app = express();
@@ -19,23 +19,21 @@ app.use(express.json());
 app.use(express.static("frontend"));
 
 // -------------------- SERVIR FRONTEND --------------------
-// Rutas específicas para cada página HTML
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/frontend/index.html");
-});
-app.get("/index.html", (req, res) => {
-  res.sendFile(__dirname + "/frontend/index.html");
-});
-app.get("/chofer.html", (req, res) => {
-  res.sendFile(__dirname + "/frontend/chofer.html");
-});
-app.get("/supervisor.html", (req, res) => {
-  res.sendFile(__dirname + "/frontend/supervisor.html");
-});
-app.get("/admin.html", (req, res) => {
-  res.sendFile(__dirname + "/frontend/admin.html");
+  res.sendFile(__dirname + "/index.html");
 });
 
+app.get("/chofer.html", (req, res) => {
+  res.sendFile(__dirname + "/chofer.html");
+});
+
+app.get("/supervisor.html", (req, res) => {
+  res.sendFile(__dirname + "/supervisor.html");
+});
+
+app.get("/admin.html", (req, res) => {
+  res.sendFile(__dirname + "/admin.html");
+});
 
 // -------------------- CONEXIÓN A MONGODB --------------------
 const mongoUri = process.env.MONGO_URI;
@@ -53,47 +51,25 @@ mongoose.connect(mongoUri)
 
 // -------------------- ENDPOINTS --------------------
 
-// Login
+// Login de usuario
 app.post("/login", async (req, res) => {
   try {
     const { username, password, placa } = req.body;
-    
     const user = await User.findOne({ username, password });
-    if (!user) {
-      return res.status(401).json({ error: "Credenciales inválidas" });
-    }
+    if (!user) return res.status(401).json({ error: "Credenciales inválidas" });
 
     if (user.role === "chofer") {
-      if (!placa) {
-        return res.status(400).json({ error: "Debe indicar la placa asignada" });
-      }
-      
+      if (!placa) return res.status(400).json({ error: "Debe indicar la placa asignada" });
       const hora = new Date().getHours();
       let turno;
       if (hora >= 7 && hora < 15) turno = "07:00-15:00";
       else if (hora >= 15 && hora < 23) turno = "15:00-23:00";
       else turno = "23:00-07:00";
-
       const asignacion = new Asignacion({ choferId: user._id, placa, turno });
       await asignacion.save();
-      
-      res.json({
-        ok: true,
-        message: "Login exitoso",
-        role: user.role,
-        nombre: user.username,
-        id: user._id,
-        placa,
-        turno
-      });
+      res.json({ ok: true, message: "Login exitoso", role: user.role, nombre: user.username, id: user._id, placa, turno });
     } else if (user.role === "supervisor" || user.role === "admin") {
-      res.json({
-        ok: true,
-        message: "Login exitoso",
-        role: user.role,
-        nombre: user.username,
-        id: user._id
-      });
+      res.json({ ok: true, message: "Login exitoso", role: user.role, nombre: user.username, id: user._id });
     } else {
       res.status(400).json({ error: "Rol de usuario desconocido" });
     }
@@ -122,11 +98,11 @@ app.post("/register", async (req, res) => {
 // Asignar y listar tareas
 app.post("/tareas", async (req, res) => {
   try {
-    const { placa, sector, turno } = req.body;
+    const { placa, sector, turno, ubicacion } = req.body;
     if (!placa || !sector || !turno) {
       return res.status(400).json({ error: "Campos obligatorios" });
     }
-    const tarea = new Tarea({ placa, sector, turno, estado: "pendiente" });
+    const tarea = new Tarea({ placa, sector, turno, ubicacion, estado: "pendiente" });
     await tarea.save();
     res.json({ ok: true, msg: "Tarea asignada ✅" });
   } catch (err) {
@@ -137,7 +113,11 @@ app.post("/tareas", async (req, res) => {
 
 app.get("/tareas", async (req, res) => {
   try {
-    const tareas = await Tarea.find();
+    const { placa, turno } = req.query;
+    let query = {};
+    if (placa) query.placa = placa;
+    if (turno) query.turno = turno;
+    const tareas = await Tarea.find(query);
     res.json(tareas);
   } catch (err) {
     res.status(500).json({ error: "Error obteniendo tareas" });
@@ -166,38 +146,16 @@ app.get("/placas", async (req, res) => {
   }
 });
 
-// Manejo de reportes y rutas
+// Reporte de chofer (un solo endpoint para actualizar estado y reportar)
 app.post("/reporte", async (req, res) => {
   try {
-    const { choferId, ubicacion, estado } = req.body;
-    const nuevoReporte = new Reporte({ choferId, ubicacion, estado });
-    await nuevoReporte.save();
-    res.json({ ok: true, msg: "Reporte recibido" });
+    const { id, estado, situacion, observacion } = req.body;
+    const tarea = await Tarea.findByIdAndUpdate(id, { estado, situacion, observacion }, { new: true });
+    if (!tarea) return res.status(404).json({ error: "Tarea no encontrada" });
+    res.json({ ok: true, msg: "Estado de tarea y reporte actualizados", tarea });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Error en el servidor" });
-  }
-});
-
-app.get("/reportes", async (req, res) => {
-  try {
-    const reportes = await Reporte.find();
-    res.json(reportes);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Error en el servidor" });
-  }
-});
-
-app.post("/ruta", async (req, res) => {
-  try {
-    const { supervisorId, choferId, puntos } = req.body;
-    const nuevaRuta = new Ruta({ supervisorId, choferId, puntos });
-    await nuevaRuta.save();
-    res.json({ ok: true, msg: "Ruta asignada" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Error en el servidor" });
+    res.status(500).json({ error: "Error al actualizar la tarea" });
   }
 });
 
@@ -209,14 +167,12 @@ app.get("/supervisor/choferes-activos", async (req, res) => {
       .populate("placa", "placa")
       .sort({ fecha: -1 })
       .limit(20);
-
     const resultado = choferes.map(c => ({
       _id: c.choferId._id,
       nombre: c.choferId.username,
       placa: c.placa,
       turno: c.turno
     }));
-
     res.json(resultado);
   } catch (err) {
     console.error(err);
@@ -228,14 +184,11 @@ app.get("/supervisor/tareas/:choferId", async (req, res) => {
   try {
     const { choferId } = req.params;
     const asignacion = await Asignacion.findOne({ choferId }).sort({ fecha: -1 });
-
     if (!asignacion) {
       return res.status(404).json({ error: "No se encontró una asignación para este chofer" });
     }
-
     const { placa, turno } = asignacion;
     const tareas = await Tarea.find({ placa, turno });
-
     res.json(tareas);
   } catch (err) {
     console.error(err);
