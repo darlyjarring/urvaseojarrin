@@ -226,6 +226,45 @@ app.get("/supervisor/tareas/:choferId", async (req, res) => {
   }
 });
 
+// Endpoints para gestión de rutas
+app.post("/rutas", async (req, res) => {
+  try {
+    const { nombre, puntos, supervisorId, choferId } = req.body;
+    if (!nombre || !puntos || puntos.length === 0) {
+      return res.status(400).json({ error: "Nombre y al menos un punto son requeridos" });
+    }
+    const nuevaRuta = new Ruta({ nombre, puntos, supervisorId, choferId });
+    await nuevaRuta.save();
+    res.json({ ok: true, msg: "Ruta registrada con éxito" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al registrar la ruta" });
+  }
+});
+
+app.get("/rutas", async (req, res) => {
+  try {
+    const rutas = await Ruta.find();
+    res.json(rutas);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error obteniendo las rutas" });
+  }
+});
+
+app.put("/rutas/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { completada } = req.body;
+    const rutaActualizada = await Ruta.findByIdAndUpdate(id, { completada }, { new: true });
+    if (!rutaActualizada) return res.status(404).json({ error: "Ruta no encontrada" });
+    res.json({ ok: true, msg: "Ruta actualizada", ruta: rutaActualizada });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error actualizando la ruta" });
+  }
+});
+
 // -------------------- PUERTO --------------------
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`🚀 Backend corriendo en puerto ${PORT}`));
