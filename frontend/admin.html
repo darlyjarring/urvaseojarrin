@@ -1,14 +1,116 @@
-<label for="placaSelect">Selecciona Vehículo (Placa):</label>
-<select id="placaSelect"></select>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>URVASEO - Panel de Administración</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #f0f2f5; }
+    .navbar {
+      display: flex;
+      justify-content: flex-start;
+      background-color: #007bff;
+      padding: 10px 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .navbar a {
+      color: white;
+      text-decoration: none;
+      padding: 10px 15px;
+      margin: 0 5px;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+    .navbar a:hover {
+      background-color: #0056b3;
+    }
+    .navbar a.active {
+      background-color: #0056b3;
+    }
+    .content {
+      padding: 20px;
+    }
+    .section { display: none; }
+    .section.active { display: block; }
+    h1, h2, h3 { color: #333; }
+    input, select, button { margin-bottom: 10px; padding: 10px; border-radius: 5px; border: 1px solid #ccc; }
+    button { cursor: pointer; background-color: #28a745; color: white; border: none; }
+    button:hover { background-color: #218838; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+    .status-active { color: green; font-weight: bold; }
+    .status-inactive { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <a href="#placas" class="active">Gestión de Placas</a>
+    <a href="#rutas">Gestión de Rutas</a>
+    <a href="#tareas">Asignar Tareas</a>
+  </div>
 
-<label for="sectorInput">Sector / Ruta:</label>
-<input id="sectorInput" placeholder="Ej: Ruta Norte">
+  <div class="content">
+    <div id="placas-section" class="section active">
+      <h2>Gestión de Placas</h2>
+      <h3>Registrar Nueva Placa</h3>
+      <input id="nuevaPlaca" placeholder="Ej: ABC-1234">
+      <select id="estadoPlaca">
+        <option value="true">Activa</option>
+        <option value="false">Inactiva</option>
+      </select>
+      <button onclick="registrarPlaca()">Registrar</button>
 
-<label for="turnoSelect">Turno:</label>
-<select id="turnoSelect">
-  <option value="07:00-15:00">07:00-15:00</option>
-  <option value="15:00-23:00">15:00-23:00</option>
-  <option value="23:00-07:00">23:00-07:00</option>
-</select>
+      <h3>Listado de Placas</h3>
+      <table id="tablaPlacas">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Placa</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-<button onclick="asignarTarea()">Asignar Tarea</button>
+    <div id="rutas-section" class="section">
+      <h2>Gestión de Rutas</h2>
+      <p>Este es el espacio para la gestión de rutas con el mapa.</p>
+    </div>
+
+    <div id="tareas-section" class="section">
+      <h2>Asignar Tareas</h2>
+      <label for="placaSelect">Selecciona Vehículo (Placa):</label>
+      <select id="placaSelect"></select>
+      <label for="sectorInput">Sector / Ruta:</label>
+      <input id="sectorInput" placeholder="Ej: Ruta Norte">
+      <label for="turnoSelect">Turno:</label>
+      <select id="turnoSelect">
+        <option value="07:00-15:00">07:00-15:00</option>
+        <option value="15:00-23:00">15:00-23:00</option>
+        <option value="23:00-07:00">23:00-07:00</option>
+      </select>
+      <button onclick="asignarTarea()">Asignar Tarea</button>
+
+      <hr>
+
+      <h3>Tareas Asignadas</h3>
+      <table id="tablaTareas">
+        <thead>
+          <tr>
+            <th>Placa</th>
+            <th>Sector</th>
+            <th>Turno</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>
