@@ -6,29 +6,21 @@ async function cargarPlacas() {
   const placas = await res.json();
   const tablaPlacasBody = document.querySelector("#tablaPlacas tbody");
   tablaPlacasBody.innerHTML = "";
-  const placaSelect = document.getElementById("placaSelect");
-  placaSelect.innerHTML = "";
 
   placas.forEach((p, i) => {
-    // Populate the table
+    // Poblar la tabla de placas
     const tr = document.createElement("tr");
-    const estadoTexto = p.activo ? "Activo" : "Inactivo";
+    const estadoTexto = p.activo ? "Activa" : "Inactiva";
     const estadoClase = p.activo ? "status-active" : "status-inactive";
     tr.innerHTML = `
       <td>${i + 1}</td>
       <td>${p.placa}</td>
-      <td class="status-cell ${estadoClase}">${estadoTexto}</td>
+      <td class="${estadoClase}">${estadoTexto}</td>
       <td>
         <button onclick="editarPlaca('${p._id}', ${p.activo})">Editar</button>
       </td>
     `;
     tablaPlacasBody.appendChild(tr);
-
-    // Populate the dropdown menu
-    const option = document.createElement("option");
-    option.value = p.placa;
-    option.text = p.placa;
-    placaSelect.add(option);
   });
 }
 
@@ -61,7 +53,7 @@ async function editarPlaca(id, estadoActual) {
   const nuevoEstadoPrompt = prompt("Ingrese el nuevo estado (activo/inactivo):", estadoActual ? "activo" : "inactivo");
   
   if (!nuevoEstadoPrompt) {
-    return; // User canceled the prompt
+    return;
   }
   const nuevoEstadoLower = nuevoEstadoPrompt.toLowerCase();
   
@@ -81,47 +73,5 @@ async function editarPlaca(id, estadoActual) {
   cargarPlacas();
 }
 
-// 🔹 Asignar tarea
-async function asignarTarea() {
-  const placa = document.getElementById("placaSelect").value;
-  const sector = document.getElementById("sectorInput").value;
-  const turno = document.getElementById("turnoSelect").value;
-
-  if (!placa || !sector) {
-    alert("Todos los campos son obligatorios");
-    return;
-  }
-
-  const res = await fetch(`${API}/tareas`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ placa, sector, turno })
-  });
-
-  const data = await res.json();
-  if (data.ok) alert("Tarea asignada ✅");
-  cargarTareas();
-}
-
-// 🔹 Cargar tareas asignadas
-async function cargarTareas() {
-  const res = await fetch(`${API}/tareas`);
-  const tareas = await res.json();
-  const tbody = document.querySelector("#tablaTareas tbody");
-  tbody.innerHTML = "";
-
-  tareas.forEach(t => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${t.placa}</td>
-      <td>${t.sector}</td>
-      <td>${t.turno}</td>
-      <td>${t.estado}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
 // Inicialización
 cargarPlacas();
-cargarTareas();
