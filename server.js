@@ -122,6 +122,47 @@ app.post("/register", async (req, res) => {
   }
 });
 
+// Endpoints Backend
+const Tarea = require("./models/Tarea");
+const Placa = require("./models/Placa");
+
+// Crear tarea (solo con placa)
+app.post("/tareas", async (req, res) => {
+  try {
+    const { placa, sector, turno } = req.body;
+
+    if (!placa || !sector || !turno) 
+      return res.status(400).json({ error: "Campos obligatorios" });
+
+    const tarea = new Tarea({ placa, sector, turno, estado: "pendiente" });
+    await tarea.save();
+    res.json({ ok: true, msg: "Tarea asignada ✅" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error asignando tarea" });
+  }
+});
+
+// Listar todas las tareas
+app.get("/tareas", async (req, res) => {
+  try {
+    const tareas = await Tarea.find();
+    res.json(tareas);
+  } catch (err) {
+    res.status(500).json({ error: "Error obteniendo tareas" });
+  }
+});
+
+// Listar placas disponibles
+app.get("/placas", async (req, res) => {
+  try {
+    const placas = await Placa.find({ activo: true });
+    res.json(placas);
+  } catch (err) {
+    res.status(500).json({ error: "Error obteniendo placas" });
+  }
+});
+
 
 // --------------------REGISTRAS NUEVAS PLACAS ------------------
 const Placa = require("./models/Placa");
