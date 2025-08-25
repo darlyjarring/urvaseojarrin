@@ -37,6 +37,10 @@ async function login() {
 
     // Redirigir a vista chofer
     window.location = "chofer.html";
+
+ 
+    localStorage.setItem("turno", data.turno);
+    window.location = "chofer.html";
   }
   else if (data.role === "supervisor") {
     window.location = "supervisor.html";
