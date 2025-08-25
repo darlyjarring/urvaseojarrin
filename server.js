@@ -14,6 +14,27 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// -------------------- SERVIR FRONTEND --------------------
+// Todos los archivos HTML, CSS, JS de la carpeta 'frontend'
+app.use(express.static("frontend"));
+
+// Rutas específicas para cada página HTML
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/frontend/index.html");
+});
+
+app.get("/index.html", (req, res) => {
+  res.sendFile(__dirname + "/frontend/index.html");
+});
+
+app.get("/chofer.html", (req, res) => {
+  res.sendFile(__dirname + "/frontend/chofer.html");
+});
+
+app.get("/supervisor.html", (req, res) => {
+  res.sendFile(__dirname + "/frontend/supervisor.html");
+}););
+
 // -------------------- CONEXIÓN A MONGODB --------------------
 const mongoUri = process.env.MONGO_URI;
 if (!mongoUri) {
