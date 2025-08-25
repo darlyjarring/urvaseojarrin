@@ -1,89 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>URVASEO – Supervisor</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <style>#map{height:400px;} #indicadores{margin-top:20px;}</style>
+  <meta charset="UTF-8">
+  <title>Supervisor - URVASEO</title>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    #map { height: 100vh; }
+  </style>
 </head>
 <body>
-<h2>Supervisor URVASEO</h2>
-
-<div id="login">
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="pass" placeholder="Contraseña">
-  <button onclick="login()">Login</button>
-</div>
-
-<div id="app" style="display:none;">
+  <h2>Panel Supervisor 🚛</h2>
   <div id="map"></div>
-  <div id="indicadores"></div>
-</div>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://cdn.socket.io/4.7.1/socket.io.min.js"></script>
-<script>
-let map, token;
+  <script>
+    // Inicializar mapa
+    const map = L.map('map').setView([-2.2, -79.9], 13);
 
-function login(){
-  fetch('http://localhost:3000/login',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      email:document.getElementById('email').value,
-      password:document.getElementById('pass').value
-    })
-  })
-  .then(res=>res.json())
-  .then(data=>{
-    if(data.token && data.rol==='Supervisor'){
-      token = data.token;
-      document.getElementById('login').style.display='none';
-      document.getElementById('app').style.display='block';
-      initMap();
-      cargarActividades();
-      cargarIndicadores();
-      setInterval(()=>{cargarActividades(); cargarIndicadores();},5000);
-    } else alert('Acceso denegado');
-  });
-}
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
 
-function initMap(){
-  map = L.map('map').setView([0.1807,-78.4678],13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {}).addTo(map);
-  
-  const socket = io('http://localhost:3000');
-  socket.on('incidente', data=>alert(`Incidente: ${data.estado} - Chofer: ${data.chofer}`));
-}
-
-async function cargarActividades(){
-  const res = await fetch('http://localhost:3000/actividades',{headers:{'Authorization':token}});
-  const actividades = await res.json();
-  map.eachLayer(l=>{if(l instanceof L.CircleMarker) map.removeLayer(l);});
-  
-  actividades.forEach(a=>{
-    let color;
-    switch(a.estado){
-      case 'Recolectando': color='green'; break;
-      case 'Robo': color='red'; break;
-      case 'Daño': color='orange'; break;
-      case 'No cumplida': color='gray'; break;
-    }
-    L.circleMarker([a.lat,a.lng],{color,radius:8}).addTo(map)
-      .bindPopup(`Chofer: ${a.chofer}<br>Estado: ${a.estado}<br>Zona: ${a.zona}`);
-  });
-}
-
-async function cargarIndicadores(){
-  const res = await fetch('http://localhost:3000/indicadores',{headers:{'Authorization':token}});
-  const data = await res.json();
-  document.getElementById('indicadores').innerHTML = `
-    <p>Total actividades: ${data.total}</p>
-    <p>Cumplidas: ${data.cumplidas}</p>
-    <p>Robos: ${data.robos}</p>
-    <p>Daños: ${data.daños}</p>
-    <p>No cumplidas: ${data.noCumplidas}</p>
-  `;
-}
-</script>
+    // Consultar todas las tareas (desde backend)
+    fetch("/tareas")
+      .then(res => res.json())
+      .then(tareas => {
+        tareas.forEach(t => {
+          L.marker([t.lat, t.lng]).addTo(map)
+            .bindPopup(`<b>${t.chofer}</b><br>${t.descripcion}`);
+        });
+      });
+  </script>
 </body>
 </html>
