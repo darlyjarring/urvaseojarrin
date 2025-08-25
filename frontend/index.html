@@ -2,22 +2,108 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>URVASEO - Login</title>
-  <link rel="stylesheet" href="css/style.css">
   <style>
-    body { font-family: Arial, sans-serif; margin: 30px; }
-    .form-box { margin-bottom: 10px; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .login-container {
+      background-color: #ffffff;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 25px;
+      font-size: 2em;
+    }
+    .form-box {
+      margin-bottom: 15px;
+    }
+    input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+      font-size: 1em;
+      transition: border-color 0.3s;
+    }
+    input:focus {
+      outline: none;
+      border-color: #007bff;
+    }
+    .hidden {
+      display: none;
+    }
+    #placa-list {
+      list-style: none;
+      padding: 0;
+      margin-top: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    #placa-list li {
+      padding: 12px 15px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+    #placa-list li:last-child {
+      border-bottom: none;
+    }
+    #placa-list li:hover {
+      background-color: #f4f4f4;
+    }
+    button {
+      width: 100%;
+      padding: 12px 15px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
   </style>
 </head>
 <body>
-  <h1>Login</h1>
-  <div class="form-box">
-    <input id="username" placeholder="Correo de Usuario">
+  <div class="login-container">
+    <h1>URVASEO Login</h1>
+    
+    <div class="form-box">
+      <input id="username" placeholder="Usuario">
+    </div>
+    <div class="form-box hidden" id="passwordBox">
+      <input id="password" type="password" placeholder="Contraseña">
+    </div>
+    
+    <div class="form-box hidden" id="placaInputBox">
+      <input id="placa" placeholder="Ingresa tu placa">
+      <ul id="placa-list"></ul>
+    </div>
+
+    <button onclick="login()" id="loginButton" class="hidden">Ingresar</button>
   </div>
-  <div class="form-box">
-    <input id="password" type="password" placeholder="Contraseña">
-  </div>
-  <button id="loginButton" onclick="verificarRol()">Continuar</button>
-  <script src="./js/app.js"></script>
+
+  <script src="js/app.js"></script>
 </body>
 </html>
