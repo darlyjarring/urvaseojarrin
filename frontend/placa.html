@@ -2,26 +2,61 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Gestión de Placas</title>
+  <title>URVASEO - Admin</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    body { font-family: Arial, sans-serif; margin: 30px; }
+    h1, h2 { color: #333; }
+    label, input, select, button { margin-bottom: 10px; display: block; width: 100%; box-sizing: border-box; }
+    button { cursor: pointer; background-color: #007BFF; color: white; border: none; padding: 10px; }
+    button:hover { background-color: #0056b3; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
     th { background-color: #f2f2f2; }
-    .activo { color: green; font-weight: bold; }
-    .inactivo { color: red; font-weight: bold; }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+    .status-cell { font-weight: bold; }
+    .status-active { color: green; }
+    .status-inactive { color: red; }
   </style>
 </head>
 <body>
-  <h1>Administración de Placas</h1>
+  <h1>Panel de Administración</h1>
 
-  <h2>Registrar nueva placa</h2>
-  <input id="nuevaPlaca" placeholder="Ej: ABC-1234">
-  <select id="estadoPlaca">
-    <option value="activo">Activo</option>
-    <option value="inactivo">Inactivo</option>
-  </select>
-  <button onclick="registrarPlaca()">Registrar</button>
+  <h2>Registrar Nueva Placa</h2>
+  <div>
+    <label for="nuevaPlaca">Placa:</label>
+    <input id="nuevaPlaca" placeholder="Ej: ABC-1234">
+  </div>
+  <div>
+    <label for="estadoPlaca">Estado:</label>
+    <select id="estadoPlaca">
+      <option value="true">Activo</option>
+      <option value="false">Inactivo</option>
+    </select>
+  </div>
+  <button onclick="registrarPlaca()">Registrar Placa</button>
+
+  <hr>
+
+  <h2>Asignar Tarea</h2>
+  <div>
+    <label for="placaSelect">Seleccionar Placa:</label>
+    <select id="placaSelect"></select>
+  </div>
+  <div>
+    <label for="sectorInput">Sector / Ruta:</label>
+    <input id="sectorInput" placeholder="Ej: Ruta Norte">
+  </div>
+  <div>
+    <label for="turnoSelect">Turno:</label>
+    <select id="turnoSelect">
+      <option value="07:00-15:00">07:00-15:00</option>
+      <option value="15:00-23:00">15:00-23:00</option>
+      <option value="23:00-07:00">23:00-07:00</option>
+    </select>
+  </div>
+  <button onclick="asignarTarea()">Asignar Tarea</button>
+
+  <hr>
 
   <h2>Listado de Placas</h2>
   <table id="tablaPlacas">
@@ -33,9 +68,26 @@
         <th>Acciones</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody>
+      </tbody>
   </table>
 
-  <script src="./js/placa.js"></script>
+  <hr>
+
+  <h2>Tareas Asignadas</h2>
+  <table id="tablaTareas">
+    <thead>
+      <tr>
+        <th>Placa</th>
+        <th>Sector</th>
+        <th>Turno</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      </tbody>
+  </table>
+
+  <script src="js/placa.js"></script>
 </body>
 </html>
