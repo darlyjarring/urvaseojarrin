@@ -6,6 +6,12 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
     #map { height: 90vh; width: 100%; }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    h2 { padding: 10px; background: #0d6efd; color: white; }
+    .popup-btn { margin: 2px; padding: 5px 10px; border: none; cursor: pointer; border-radius: 5px; }
+    .cumplida { background: #28a745; color: white; }
+    .pendiente { background: #ffc107; color: black; }
+    .proceso { background: #17a2b8; color: white; }
   </style>
 </head>
 <body>
@@ -27,23 +33,58 @@
       const marker = L.marker([p.lat, p.lng]).addTo(map);
       marker.bindPopup(`
         <b>Punto ${i+1}</b><br>
-        Estado: ${p.estado}<br>
-        <button onclick="marcarRecogido(${i})">Recogido</button>
-        <button onclick="marcarIncidencia(${i}, 'Daño')">Daño</button>
-        <button onclick="marcarIncidencia(${i}, 'Robo')">Robo</button>
+        Estado actual: <b>${p.estado}</b><br><br>
+        
+        <button class="popup-btn cumplida" onclick="marcarEstado(${i}, 'cumplida')">Cumplida</button>
+        <button class="popup-btn proceso" onclick="marcarEstado(${i}, 'en proceso')">En Proceso</button>
+        <button class="popup-btn pendiente" onclick="marcarEstado(${i}, 'pendiente')">Pendiente</button>
+        <hr>
+        <b>Situación:</b><br>
+        <select id="situacion-${i}">
+          <option value="Sin novedad">Sin novedad</option>
+          <option value="Robo">Robo</option>
+          <option value="Daño de vehículo">Daño de vehículo</option>
+          <option value="Muerte">Muerte</option>
+          <option value="Accidente">Accidente</option>
+          <option value="Protesta">Protesta</option>
+        </select><br><br>
+        <textarea id="observacion-${i}" placeholder="Observación (opcional)" rows="3" cols="25"></textarea><br>
+        <button class="popup-btn" style="background:#007bff; color:white;" onclick="enviarReporte(${i})">Enviar Reporte</button>
       `);
     });
 
-    function marcarRecogido(i) {
-      alert("Contenedor " + (i+1) + " marcado como recogido ✅");
-      // Aquí mandamos update al backend con fetch
+    function marcarEstado(i, nuevoEstado) {
+      puntos[i].estado = nuevoEstado;
+      alert("Punto " + (i+1) + " marcado como: " + nuevoEstado);
+      // Aquí podrías actualizar también en backend con fetch
     }
 
-    function marcarIncidencia(i, tipo) {
-      alert("Reporte enviado: " + tipo);
-      // Aquí mandamos el reporte al backend
+    async function enviarReporte(i) {
+      const situacion = document.getElementById(`situacion-${i}`).value;
+      const observacion = document.getElementById(`observacion-${i}`).value;
+
+      const data = {
+        choferId: "chofer_demo", // ⚠️ reemplazar con el ID real del chofer logueado
+        ubicacion: { lat: puntos[i].lat, lng: puntos[i].lng },
+        estado: puntos[i].estado,
+        situacion,
+        observacion
+      };
+
+      try {
+        const res = await fetch("https://urvaseo-backend.onrender.com/reporte", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        alert("Reporte enviado ✅: " + JSON.stringify(result));
+      } catch (err) {
+        alert("Error al enviar reporte ❌");
+        console.error(err);
+      }
     }
   </script>
 </body>
 </html>
-
