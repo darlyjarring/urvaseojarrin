@@ -45,6 +45,9 @@ async function login() {
   else if (data.role === "supervisor") {
     window.location = "supervisor.html";
   }
+  else if (data.role === "admin") {
+    window.location = "admin.html";
+  }
   else {
     alert("Rol desconocido ❓");
   }
