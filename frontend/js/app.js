@@ -4,7 +4,6 @@ async function login() {
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
 
-  // 1. Enviamos al backend para validar credenciales
   const res = await fetch(`${API}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -22,33 +21,28 @@ async function login() {
   if (data.role === "chofer") {
     const placaBox = document.getElementById("placaBox");
     placaBox.classList.remove("hidden");
-
-    const placa = document.getElementById("placa").value;
-
+    
     // Si aún no han ingresado la placa, pedimos que la escriban
+    const placa = document.getElementById("placa").value;
     if (!placa) {
       alert("Por favor ingresa la placa del vehículo 🚛");
       return;
     }
 
-    // Guardamos todo en localStorage
+    // Guardamos los datos necesarios en localStorage
+    localStorage.setItem("choferId", data.id); // Asumiendo que el backend devuelve 'id'
     localStorage.setItem("chofer", data.nombre || username);
     localStorage.setItem("placa", placa);
+    localStorage.setItem("turno", data.turno);
 
     // Redirigir a vista chofer
     window.location = "chofer.html";
 
- 
-    localStorage.setItem("turno", data.turno);
-    window.location = "chofer.html";
-  }
-  else if (data.role === "supervisor") {
+  } else if (data.role === "supervisor") {
     window.location = "supervisor.html";
-  }
-  else if (data.role === "admin") {
+  } else if (data.role === "admin") {
     window.location = "admin.html";
-  }
-  else {
+  } else {
     alert("Rol desconocido ❓");
   }
 }
