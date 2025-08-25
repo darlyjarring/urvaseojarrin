@@ -1,9 +1,10 @@
-const API = "https://urvaseo-backend.onrender.com"; 
+const API = "https://urvaseo-backend.onrender.com"; // tu backend
 
 async function login() {
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
 
+  // 1. Enviamos al backend para validar credenciales
   const res = await fetch(`${API}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -11,26 +12,36 @@ async function login() {
   });
 
   const data = await res.json();
-  if (data.role === "chofer") {
-    window.location = "chofer.html";
-  } else if (data.role === "supervisor") {
-    window.location = "supervisor.html";
-  } else {
-    alert("Error en login");
+
+  if (!data.role) {
+    alert("Usuario o contraseña incorrectos ❌");
+    return;
   }
-}
 
-async function reportar(estado) {
-  await fetch(`${API}/reporte`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ choferId: "chofer123", ubicacion: { lat: -3.26, lng: -79.95 }, estado })
-  });
-  alert("Reporte enviado: " + estado);
-}
+  // 2. Si el rol es chofer -> mostrar input de placa
+  if (data.role === "chofer") {
+    const placaBox = document.getElementById("placaBox");
+    placaBox.classList.remove("hidden");
 
-async function verReportes() {
-  const res = await fetch(`${API}/reportes`);
-  const reportes = await res.json();
-  document.getElementById("reportes").innerText = JSON.stringify(reportes, null, 2);
+    const placa = document.getElementById("placa").value;
+
+    // Si aún no han ingresado la placa, pedimos que la escriban
+    if (!placa) {
+      alert("Por favor ingresa la placa del vehículo 🚛");
+      return;
+    }
+
+    // Guardamos todo en localStorage
+    localStorage.setItem("chofer", data.nombre || username);
+    localStorage.setItem("placa", placa);
+
+    // Redirigir a vista chofer
+    window.location = "chofer.html";
+  }
+  else if (data.role === "supervisor") {
+    window.location = "supervisor.html";
+  }
+  else {
+    alert("Rol desconocido ❓");
+  }
 }
