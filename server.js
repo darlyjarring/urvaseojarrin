@@ -33,7 +33,7 @@ app.get("/chofer.html", (req, res) => {
 
 app.get("/supervisor.html", (req, res) => {
   res.sendFile(__dirname + "/frontend/supervisor.html");
-}););
+});
 
 // -------------------- CONEXIÓN A MONGODB --------------------
 const mongoUri = process.env.MONGO_URI;
