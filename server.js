@@ -20,19 +20,19 @@ app.use(express.static("frontend"));
 
 // -------------------- SERVIR FRONTEND --------------------
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/index.html");
+  res.sendFile(__dirname + "/frontend/index.html");
 });
 
 app.get("/chofer.html", (req, res) => {
-  res.sendFile(__dirname + "/chofer.html");
+  res.sendFile(__dirname + "/frontend/chofer.html");
 });
 
 app.get("/supervisor.html", (req, res) => {
-  res.sendFile(__dirname + "/supervisor.html");
+  res.sendFile(__dirname + "/frontend/supervisor.html");
 });
 
 app.get("/admin.html", (req, res) => {
-  res.sendFile(__dirname + "/admin.html");
+  res.sendFile(__dirname + "/frontend/admin.html");
 });
 
 // -------------------- CONEXIÓN A MONGODB --------------------
@@ -51,7 +51,22 @@ mongoose.connect(mongoUri)
 
 // -------------------- ENDPOINTS --------------------
 
-// Login de usuario
+// Endpoint 1: Verifica el rol del usuario y si es válido
+app.post("/check-role", async (req, res) => {
+  try {
+    const { username } = req.body;
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(401).json({ error: "Usuario no encontrado" });
+    }
+    res.json({ ok: true, role: user.role });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error en el servidor" });
+  }
+});
+
+// Endpoint 2: Realiza el login final
 app.post("/login", async (req, res) => {
   try {
     const { username, password, placa } = req.body;
@@ -60,11 +75,13 @@ app.post("/login", async (req, res) => {
 
     if (user.role === "chofer") {
       if (!placa) return res.status(400).json({ error: "Debe indicar la placa asignada" });
+      
       const hora = new Date().getHours();
       let turno;
       if (hora >= 7 && hora < 15) turno = "07:00-15:00";
       else if (hora >= 15 && hora < 23) turno = "15:00-23:00";
       else turno = "23:00-07:00";
+      
       const asignacion = new Asignacion({ choferId: user._id, placa, turno });
       await asignacion.save();
       res.json({ ok: true, message: "Login exitoso", role: user.role, nombre: user.username, id: user._id, placa, turno });
@@ -125,11 +142,10 @@ app.get("/tareas", async (req, res) => {
 });
 
 // Registrar y listar placas
-// Registrar y listar placas
 app.post("/placas", async (req, res) => {
   try {
-    const { placa, marca, modelo, activo } = req.body;
-    const nuevaPlaca = new Placa({ placa, marca, modelo, activo });
+    const { placa, activo } = req.body;
+    const nuevaPlaca = new Placa({ placa, activo });
     await nuevaPlaca.save();
     res.json({ ok: true, msg: "Vehículo registrado" });
   } catch (err) {
@@ -138,7 +154,15 @@ app.post("/placas", async (req, res) => {
   }
 });
 
-// Editar el estado de una placa
+app.get("/placas", async (req, res) => {
+  try {
+    const placas = await Placa.find({ activo: true });
+    res.json(placas);
+  } catch (err) {
+    res.status(500).json({ error: "Error obteniendo placas" });
+  }
+});
+
 app.put("/placas/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -149,15 +173,6 @@ app.put("/placas/:id", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error actualizando la placa" });
-  }
-});
-
-app.get("/placas", async (req, res) => {
-  try {
-    const placas = await Placa.find(); // Ya no filtramos por activo, el frontend lo manejará.
-    res.json(placas);
-  } catch (err) {
-    res.status(500).json({ error: "Error obteniendo placas" });
   }
 });
 
