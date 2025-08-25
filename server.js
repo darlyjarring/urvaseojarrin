@@ -125,10 +125,11 @@ app.get("/tareas", async (req, res) => {
 });
 
 // Registrar y listar placas
+// Registrar y listar placas
 app.post("/placas", async (req, res) => {
   try {
-    const { placa, marca, modelo } = req.body;
-    const nuevaPlaca = new Placa({ placa, marca, modelo });
+    const { placa, marca, modelo, activo } = req.body;
+    const nuevaPlaca = new Placa({ placa, marca, modelo, activo });
     await nuevaPlaca.save();
     res.json({ ok: true, msg: "Vehículo registrado" });
   } catch (err) {
@@ -137,9 +138,23 @@ app.post("/placas", async (req, res) => {
   }
 });
 
+// Editar el estado de una placa
+app.put("/placas/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { activo } = req.body;
+    const placaActualizada = await Placa.findByIdAndUpdate(id, { activo }, { new: true });
+    if (!placaActualizada) return res.status(404).json({ error: "Placa no encontrada" });
+    res.json({ ok: true, msg: "Estado de la placa actualizado", placa: placaActualizada });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error actualizando la placa" });
+  }
+});
+
 app.get("/placas", async (req, res) => {
   try {
-    const placas = await Placa.find({ activo: true });
+    const placas = await Placa.find(); // Ya no filtramos por activo, el frontend lo manejará.
     res.json(placas);
   } catch (err) {
     res.status(500).json({ error: "Error obteniendo placas" });
