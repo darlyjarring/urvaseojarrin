@@ -2,34 +2,32 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Supervisor - URVASEO</title>
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <title>Supervisor - Seguimiento de Rutas</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    #map { height: 100vh; }
+    #map { height: 90vh; width: 100%; }
   </style>
 </head>
 <body>
-  <h2>Panel Supervisor 🚛</h2>
+  <h2>Monitoreo de Choferes</h2>
   <div id="map"></div>
 
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    // Inicializar mapa
     const map = L.map('map').setView([-2.2, -79.9], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
-    }).addTo(map);
+    // Simulación: puntos ya reportados por el chofer
+    const tareas = [
+      { lat: -2.196, lng: -79.880, estado: "Recogido ✅" },
+      { lat: -2.200, lng: -79.890, estado: "Daño ⚠️" }
+    ];
 
-    // Consultar todas las tareas (desde backend)
-    fetch("/tareas")
-      .then(res => res.json())
-      .then(tareas => {
-        tareas.forEach(t => {
-          L.marker([t.lat, t.lng]).addTo(map)
-            .bindPopup(`<b>${t.chofer}</b><br>${t.descripcion}`);
-        });
-      });
+    tareas.forEach(t => {
+      const marker = L.marker([t.lat, t.lng]).addTo(map);
+      marker.bindPopup(`<b>${t.estado}</b>`);
+    });
   </script>
 </body>
 </html>
+
