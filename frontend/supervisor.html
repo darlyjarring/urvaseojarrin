@@ -2,32 +2,34 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Supervisor - Seguimiento de Rutas</title>
+  <title>Panel Supervisor</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    #map { height: 90vh; width: 100%; }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #choferes { margin-bottom: 20px; }
+    .chofer { cursor: pointer; padding: 10px; border: 1px solid #ddd; margin: 5px; border-radius: 5px; }
+    .pendiente { background-color: red; color: white; }
+    .ejecutando { background-color: orange; color: white; }
+    .ejecutada { background-color: green; color: white; }
+    .sector { background-color: blue; color: white; }
+    #map { height: 400px; margin-top: 20px; }
   </style>
 </head>
 <body>
-  <h2>Monitoreo de Choferes</h2>
+  <h1>Panel Supervisor</h1>
+
+  <h2>Choferes activos en turno</h2>
+  <div id="choferes"></div>
+
+  <h2>Tareas del chofer seleccionado</h2>
+  <div id="tareas"></div>
   <div id="map"></div>
 
+  <h2>Reporte gráfico</h2>
+  <canvas id="grafico" width="400" height="200"></canvas>
+
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    const map = L.map('map').setView([-2.2, -79.9], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-    // Simulación: puntos ya reportados por el chofer
-    const tareas = [
-      { lat: -2.196, lng: -79.880, estado: "Recogido ✅" },
-      { lat: -2.200, lng: -79.890, estado: "Daño ⚠️" }
-    ];
-
-    tareas.forEach(t => {
-      const marker = L.marker([t.lat, t.lng]).addTo(map);
-      marker.bindPopup(`<b>${t.estado}</b>`);
-    });
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/supervisor.js"></script>
 </body>
 </html>
-
