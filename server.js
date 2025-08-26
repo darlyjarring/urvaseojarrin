@@ -51,31 +51,31 @@ mongoose.connect(mongoUri)
 
 // -------------------- ENDPOINTS --------------------
 
-// 💡 Nuevo endpoint para verificar el rol del usuario
+// Endpoint 1: Verifica el rol del usuario y si es válido
 app.post("/check-role", async (req, res) => {
   try {
     const { username } = req.body;
     const user = await User.findOne({ username });
     if (!user) {
-      return res.status(404).json({ error: "Usuario no encontrado" });
+      return res.status(401).json({ ok: false, error: "Usuario no encontrado" });
     }
-    res.json({ role: user.role });
+    res.json({ ok: true, role: user.role });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Error en el servidor" });
+    res.status(500).json({ ok: false, error: "Error en el servidor" });
   }
 });
 
-// Endpoint de LOGIN
+// Endpoint 2: Realiza el login final
 app.post("/login", async (req, res) => {
   try {
     const { username, password, placa } = req.body;
     const user = await User.findOne({ username, password });
-    if (!user) return res.status(401).json({ ok: false, message: "Credenciales inválidas" });
+    if (!user) return res.status(401).json({ ok: false, error: "Credenciales inválidas" });
 
     if (user.role === "chofer") {
-      if (!placa) return res.status(400).json({ ok: false, message: "Debe indicar la placa asignada" });
-
+      if (!placa) return res.status(400).json({ ok: false, error: "Debe indicar la placa asignada" });
+      
       const hora = new Date().getHours();
       let turno;
       if (hora >= 7 && hora < 15) turno = "07:00-15:00";
@@ -84,15 +84,15 @@ app.post("/login", async (req, res) => {
       
       const asignacion = new Asignacion({ choferId: user._id, placa, turno });
       await asignacion.save();
-      res.json({ ok: true, message: "Login exitoso", role: user.role, nombre: user.username, choferId: user._id, placa, turno });
+      res.json({ ok: true, message: "Login exitoso", role: user.role, nombre: user.username, id: user._id, placa, turno });
     } else if (user.role === "supervisor" || user.role === "admin") {
       res.json({ ok: true, message: "Login exitoso", role: user.role, nombre: user.username, id: user._id });
     } else {
-      res.status(400).json({ ok: false, message: "Rol de usuario desconocido" });
+      res.status(400).json({ ok: false, error: "Rol de usuario desconocido" });
     }
   } catch (err) {
     console.error(err);
-    res.status(500).json({ ok: false, message: "Error en el servidor" });
+    res.status(500).json({ ok: false, error: "Error en el servidor" });
   }
 });
 
