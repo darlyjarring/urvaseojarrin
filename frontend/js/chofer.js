@@ -11,19 +11,21 @@ let markers = [];
 let polyline = null;
 let rutaIdActual = null;
 
-// --- Definición de Íconos Personalizados con AwesomeMarkers ---
-const getAwesomeIcon = (color, icon) => {
-    return L.AwesomeMarkers.icon({
-        icon: icon,
-        markerColor: color,
-        prefix: 'fa' // Usa íconos de Font Awesome
+// --- Definición de Íconos SVG Personalizados ---
+const getIcon = (color) => {
+    return L.divIcon({
+        className: 'custom-div-icon',
+        html: `<div style="color: ${color}; font-size: 24px; position: relative;"><i class="fas fa-map-marker-alt"></i></div>`,
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
     });
 };
 
-const pendienteIcon = getAwesomeIcon('blue', 'fa-map-marker-alt');
-const enProcesoIcon = getAwesomeIcon('orange', 'fa-map-marker-alt');
-const completadaIcon = getAwesomeIcon('green', 'fa-map-marker-alt');
-const danadoIcon = getAwesomeIcon('red', 'fa-map-marker-alt');
+const pendienteIcon = getIcon('blue');
+const enProcesoIcon = getIcon('orange');
+const completadaIcon = getIcon('green');
+const danadoIcon = getIcon('red');
 
 // --- Lógica principal ---
 document.addEventListener("DOMContentLoaded", () => {
@@ -54,7 +56,9 @@ async function cargarTareas() {
     
     dibujarRecorrido(puntosRuta);
     dibujarPuntos(puntosRuta);
-
+    dibujarTabla(puntosRuta); // Llama a la función para dibujar la tabla
+    console.log("Datos de los puntos de la ruta cargados:", puntosRuta); // Para depuración
+    
   } catch (err) {
     console.error("Error al cargar tareas:", err);
     alert("No se pudieron cargar las tareas.");
@@ -95,16 +99,14 @@ function dibujarPuntos(puntos) {
     
     const marker = L.marker([p.lat, p.lng], { icon: icon }).addTo(map);
 
-    // Manejar el evento de doble clic para reportar novedad
     marker.on('dblclick', (e) => {
-      if (p.estado.toLowerCase() === 'ejecutada' || p.estado.toLowerCase() === 'completada') {
+      if (estadoMinusculas === 'ejecutada' || estadoMinusculas === 'completada') {
         alert("No se puede reportar una novedad en un punto ya completado.");
       } else {
         reportarNovedad(p._id, p.lat, p.lng);
       }
     });
 
-    // Manejar el evento de clic para cambiar estado
     marker.on('click', async (e) => {
       let popupContent = `
         <b>Punto ${i + 1}</b><br>
@@ -114,17 +116,17 @@ function dibujarPuntos(puntos) {
         <hr>
       `;
 
-      if (p.estado.toLowerCase() === 'pendiente') {
+      if (estadoMinusculas === 'pendiente') {
         await marcarPunto(p._id, 'en proceso');
-      } else if (p.estado.toLowerCase() === 'en proceso') {
+      } else if (estadoMinusculas === 'en proceso') {
         popupContent += `
           <button onclick="marcarPunto('${p._id}', 'ejecutada')" style="background-color: #28a745; color: white;">Marcar como completada</button>
         `;
         marker.setPopupContent(popupContent).openPopup();
-      } else if (p.estado.toLowerCase() === 'ejecutada' || p.estado.toLowerCase() === 'completada') {
+      } else if (estadoMinusculas === 'ejecutada' || estadoMinusculas === 'completada') {
         popupContent += `<span>Este punto ya ha sido completado ✅</span>`;
         marker.setPopupContent(popupContent).openPopup();
-      } else if (p.estado.toLowerCase() === 'dañado') {
+      } else if (estadoMinusculas === 'dañado') {
         popupContent += `<span>Este punto tiene una novedad y no puede ser completado.</span>`;
         marker.setPopupContent(popupContent).openPopup();
       } else {
@@ -133,6 +135,22 @@ function dibujarPuntos(puntos) {
     });
     
     markers.push(marker);
+  });
+}
+
+function dibujarTabla(puntos) {
+  const tbody = document.querySelector("#tareas-tabla tbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+  puntos.forEach((p, i) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${p.nombre}</td>
+      <td>${p.direccion}</td>
+      <td>${p.estado}</td>
+    `;
+    tbody.appendChild(tr);
   });
 }
 
