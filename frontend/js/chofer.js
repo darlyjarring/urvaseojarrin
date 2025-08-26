@@ -23,9 +23,10 @@ const getIcon = (color) => {
     });
 };
 
-const pendienteIcon = getIcon('blue');
-const enProcesoIcon = getIcon('orange');
-const completadaIcon = getIcon('green');
+const pendienteIcon = getIcon('blue'); // Usamos azul para "pendiente"
+const enProcesoIcon = getIcon('orange'); // Usamos naranja para "en proceso"
+const completadaIcon = getIcon('green'); // Usamos verde para "ejecutada"
+const danadoIcon = getIcon('red'); // Usamos rojo para "dañado"
 
 // --- Lógica principal ---
 document.addEventListener("DOMContentLoaded", () => {
@@ -82,8 +83,11 @@ function dibujarPuntos(puntos) {
       case "en proceso":
         icon = enProcesoIcon;
         break;
-      case "ejecutada": // Lo que llamas 'completada' en el frontend es 'ejecutada' en tu backend
+      case "ejecutada":
         icon = completadaIcon;
+        break;
+      case "dañado":
+        icon = danadoIcon;
         break;
       default: // 'pendiente' o cualquier otro
         icon = pendienteIcon;
@@ -99,7 +103,7 @@ function dibujarPuntos(puntos) {
       <hr>
     `;
 
-    // 💡 Solo agregamos los botones si el punto no ha sido completado
+    // Solo agregamos los botones si el punto no ha sido completado
     if (p.estado.toLowerCase() !== 'ejecutada') {
       popupContent += `
         <button onclick="marcarPunto('${p._id}', 'ejecutada')" style="background-color: #28a745; color: white;">Marcar como completada</button>
