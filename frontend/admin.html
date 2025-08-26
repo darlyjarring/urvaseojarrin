@@ -63,7 +63,8 @@
         .punto-item:last-child {
             border-bottom: none;
         }
-                /* Estilos específicos para las tablas */
+        
+        /* Estilos específicos para las tablas */
         .tabla-container {
             width: 100%;
             overflow-x: auto;
@@ -97,6 +98,7 @@
     </style>
 </head>
 <body>
+
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
             <a class="navbar-brand text-light" href="#">Panel de Administración</a>
@@ -115,6 +117,7 @@
             </div>
         </div>
     </nav>
+
     <div id="placas-section" class="section active">
         <div class="container-fluid">
             <h2>Gestión de Placas</h2>
@@ -133,7 +136,8 @@
                 </div>
                 <button onclick="registrarPlaca()" class="btn btn-primary">Registrar</button>
             </div>
-                <div class="card p-4 mt-4">
+    
+            <div class="card p-4 mt-4">
                 <h3>Vehículos Registrados</h3>
                 <table class="table table-hover" id="tablaPlacas">
                     <thead>
@@ -150,6 +154,7 @@
             </div>
         </div>
     </div>
+
     <div id="tareas-section" class="section">
         <div class="container-fluid">
             <h2>Gestión de Tareas</h2>
@@ -174,6 +179,7 @@
                 </div>
                 <button onclick="asignarTarea()" class="btn btn-success">Asignar Tarea</button>
             </div>
+
             <div class="card p-4 mt-4">
                 <h3>Tareas Asignadas</h3>
                 <div class="tabla-container">
@@ -193,7 +199,8 @@
             </div>
         </div>
     </div>
-        <div id="rutas-section" class="section">
+    
+    <div id="rutas-section" class="section">
         <div class="container-fluid">
             <h2>Gestión de Rutas</h2>
             <div class="card p-4">
@@ -206,7 +213,8 @@
                 <div id="puntosContainer" class="list-group mb-3"></div>
                 <button onclick="guardarRuta()" class="btn btn-success">Guardar Ruta</button>
             </div>
-                        <div class="card p-4 mt-4">
+            
+            <div class="card p-4 mt-4">
                 <h3>Rutas Registradas</h3>
                 <div class="tabla-container">
                     <table id="tablaRutas" class="table table-hover">
@@ -223,7 +231,9 @@
             </div>
         </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/admin.js"></script>
+    <script src="admin.js"></script>
+
 </body>
 </html>
