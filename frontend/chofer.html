@@ -4,19 +4,51 @@
   <meta charset="UTF-8">
   <title>Chofer - Ruta de Recolección</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
     h2 { padding: 10px; background: #0d6efd; color: white; margin: 0; }
-    #map { height: 90vh; width: 100%; }
+    .main-container { display: flex; height: 90vh; }
+    #map-container { flex: 3; }
+    #map { height: 100%; width: 100%; }
+    #tareas-lista-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      background: #f8f9fa;
+      border-left: 1px solid #ccc;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; font-size: 12px; }
+    th { background-color: #0d6efd; color: white; }
+    .punto-item { cursor: pointer; }
+    .punto-item:hover { background-color: #e9ecef; }
   </style>
 </head>
 <body>
   <h2>Ruta asignada del turno</h2>
-  <div id="map"></div>
+  <div class="main-container">
+    <div id="map-container">
+      <div id="map"></div>
+    </div>
+    <div id="tareas-lista-container">
+      <h3>Lista de Puntos</h3>
+      <table id="tareas-tabla">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Sector</th>
+            <th>Dirección</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          </tbody>
+      </table>
+    </div>
+  </div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet.awesome-markers@2.0.5/dist/leaflet.awesome-markers.min.js"></script>
   <script src="js/chofer.js"></script>
 </body>
 </html>
