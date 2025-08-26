@@ -7,8 +7,8 @@ const puntoSchema = new mongoose.Schema({
   direccion: { type: String, required: true },
   estado: {
     type: String,
-    enum: ["operativo", "dañado", "completado"],
-    default: "operativo"
+    enum: ["Pendiente", "En proceso", "completado"],
+    default: "Pendiente"
   },
 });
 
