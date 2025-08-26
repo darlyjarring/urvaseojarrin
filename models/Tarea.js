@@ -5,6 +5,12 @@ const TareaSchema = new mongoose.Schema({
   sector: { type: String, required: true },
   turno: { type: String, required: true },
   fecha: { type: Date, default: Date.now },
+  // 💡 Campo general para el estado de la tarea (pendiente hasta que se complete toda la ruta)
+  estado: {
+    type: String,
+    enum: ["pendiente", "terminada"],
+    default: "pendiente",
+  },
   // Referencia a la ruta para obtener sus puntos
   rutaId: {
     type: mongoose.Schema.Types.ObjectId,
