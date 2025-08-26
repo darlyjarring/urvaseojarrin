@@ -161,7 +161,6 @@ async function cargarTareas() {
     tareas.forEach(t => {
       const tr = document.createElement("tr");
       
-      // Construir la fila principal con el estado general
       tr.innerHTML = `
         <td>${t.placa}</td>
         <td>${t.sector}</td>
@@ -170,25 +169,46 @@ async function cargarTareas() {
       `;
       tbody.appendChild(tr);
 
-      // Agregar la fila detallada con los estados de cada punto
+      // Fila de detalles con la tabla anidada
       if (t.estados_detareaxelemntoderuta && t.estados_detareaxelemntoderuta.length > 0) {
         const trDetalle = document.createElement("tr");
-        const tdDetalle = document.createElement("td");
-        tdDetalle.setAttribute("colspan", "4");
-        
-        let puntosHTML = `<div style="padding-left: 20px;"><b>Progreso de Puntos:</b><br><ul>`;
-        
-        t.estados_detareaxelemntoderuta.forEach(puntoEstado => {
-          // Buscar el nombre del punto usando su ID
-          const puntoEnRuta = t.rutaId.puntos.find(p => p._id === puntoEstado.puntoId);
-          const nombrePunto = puntoEnRuta ? puntoEnRuta.nombre : 'Desconocido';
-          puntosHTML += `<li>${nombrePunto}: **${puntoEstado.estado}**</li>`;
-        });
-        puntosHTML += `</ul></div>`;
-        
-        tdDetalle.innerHTML = puntosHTML;
-        trDetalle.appendChild(tdDetalle);
-        tbody.appendChild(trDetalle);
+        const tdDetalle = document.createElement("td");
+        tdDetalle.setAttribute("colspan", "4");
+        
+        let puntosHTML = `
+          <div class="puntos-detalle">
+            <h6>Progreso de Puntos:</h6>
+            <table class="table table-bordered table-sm">
+              <thead>
+                <tr>
+                  <th>Punto</th>
+                  <th>Estado del Punto</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        t.estados_detareaxelemntoderuta.forEach(puntoEstado => {
+          // Buscamos el nombre del punto usando su ID
+          const puntoEnRuta = t.rutaId.puntos.find(p => p._id === puntoEstado.puntoId);
+          const nombrePunto = puntoEnRuta ? puntoEnRuta.nombre : 'Desconocido';
+          puntosHTML += `
+            <tr>
+              <td>${nombrePunto}</td>
+              <td>${puntoEstado.estado}</td>
+            </tr>
+          `;
+        });
+        
+        puntosHTML += `
+              </tbody>
+            </table>
+          </div>
+        `;
+        
+        tdDetalle.innerHTML = puntosHTML;
+        trDetalle.appendChild(tdDetalle);
+        tbody.appendChild(trDetalle);
       }
     });
   } catch (error) {
