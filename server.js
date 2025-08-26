@@ -51,15 +51,15 @@ mongoose.connect(mongoUri)
 
 // -------------------- ENDPOINTS --------------------
 
-// Endpoint de LOGIN (Consolidado)
+// Endpoint de LOGIN
 app.post("/login", async (req, res) => {
   try {
     const { username, password, placa } = req.body;
     const user = await User.findOne({ username, password });
-    if (!user) return res.status(401).json({ error: "Credenciales inválidas" });
+    if (!user) return res.status(401).json({ ok: false, message: "Credenciales inválidas" });
 
     if (user.role === "chofer") {
-      if (!placa) return res.status(400).json({ error: "Debe indicar la placa asignada" });
+      if (!placa) return res.status(400).json({ ok: false, message: "Debe indicar la placa asignada" });
 
       const hora = new Date().getHours();
       let turno;
@@ -73,11 +73,11 @@ app.post("/login", async (req, res) => {
     } else if (user.role === "supervisor" || user.role === "admin") {
       res.json({ ok: true, message: "Login exitoso", role: user.role, nombre: user.username, id: user._id });
     } else {
-      res.status(400).json({ error: "Rol de usuario desconocido" });
+      res.status(400).json({ ok: false, message: "Rol de usuario desconocido" });
     }
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Error en el servidor" });
+    res.status(500).json({ ok: false, message: "Error en el servidor" });
   }
 });
 
@@ -215,12 +215,15 @@ app.post("/tareas", async (req, res) => {
   }
 });
 
+// 💡 Endpoint de TAREAS corregido: ahora permite consultar todas las tareas sin parámetros
 app.get("/tareas", async (req, res) => {
   try {
     const { placa, turno } = req.query;
     let query = {};
-    if (placa) query.placa = placa;
-    if (turno) query.turno = turno;
+    if (placa && turno) {
+      query.placa = placa;
+      query.turno = turno;
+    }
     const tareas = await Tarea.find(query).populate("rutaId");
     res.json(tareas);
   } catch (err) {
