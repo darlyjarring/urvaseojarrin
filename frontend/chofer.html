@@ -5,110 +5,49 @@
   <title>Chofer - Ruta de Recolección</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    #map { height: 90vh; width: 100%; }
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    h2 { padding: 10px; background: #0d6efd; color: white; }
-    .popup-btn { margin: 2px; padding: 5px 10px; border: none; cursor: pointer; border-radius: 5px; }
-    .cumplida { background: #28a745; color: white; }
-    .pendiente { background: #dc3545; color: white; }
-    .proceso { background: #ffc107; color: black; }
+    h2 { padding: 10px; background: #0d6efd; color: white; margin: 0; }
+    .main-container { display: flex; height: 90vh; }
+    #map-container { flex: 3; } /* El mapa ocupa 3/4 del espacio */
+    #map { height: 100%; width: 100%; }
+    #tareas-lista-container {
+      flex: 1; /* La tabla ocupa 1/4 del espacio */
+      overflow-y: auto;
+      padding: 10px;
+      background: #f8f9fa;
+      border-left: 1px solid #ccc;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; font-size: 12px; }
+    th { background-color: #0d6efd; color: white; }
+    .punto-item { cursor: pointer; }
+    .punto-item:hover { background-color: #e9ecef; }
   </style>
 </head>
 <body>
   <h2>Ruta asignada del turno</h2>
-  <div id="map"></div>
+  <div class="main-container">
+    <div id="map-container">
+      <div id="map"></div>
+    </div>
+    <div id="tareas-lista-container">
+      <h3>Lista de Puntos</h3>
+      <table id="tareas-tabla">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Sector</th>
+            <th>Dirección</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          </tbody>
+      </table>
+    </div>
+  </div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    const API = "https://urvaseo-backend.onrender.com";
-
-    // Obtener datos de chofer logueado
-    const choferId = localStorage.getItem("choferId"); // ⚠️ reemplazar al hacer login real
-    const placa = localStorage.getItem("placa") ;
-    const turno = localStorage.getItem("turno");
-
-    const map = L.map('map').setView([-2.2, -79.9], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-    let puntos = [];
-
-    async function cargarTareas() {
-      try {
-        const res = await fetch(`${API}/tareas?placa=${placa}&turno=${turno}`);
-        puntos = await res.json();
-
-        puntos.forEach((p, i) => {
-          // Color según estado
-          let color;
-          switch(p.estado) {
-            case "cumplida": color = "#28a745"; break;
-            case "pendiente": color = "#dc3545"; break;
-            case "en proceso": color = "#ffc107"; break;
-            default: color = "#17a2b8";
-          }
-
-          const marker = L.marker([p.ubicacion.lat, p.ubicacion.lng]).addTo(map);
-          marker.bindPopup(`
-            <b>Punto ${i+1}</b><br>
-            Estado actual: <b>${p.estado}</b><br><br>
-
-            <button class="popup-btn cumplida" onclick="marcarEstado(${i}, 'cumplida')">Cumplida</button>
-            <button class="popup-btn proceso" onclick="marcarEstado(${i}, 'en proceso')">En Proceso</button>
-            <button class="popup-btn pendiente" onclick="marcarEstado(${i}, 'pendiente')">Pendiente</button>
-            <hr>
-            <b>Situación:</b><br>
-            <select id="situacion-${i}">
-              <option value="Sin novedad">Sin novedad</option>
-              <option value="Robo">Robo</option>
-              <option value="Daño de vehículo">Daño de vehículo</option>
-              <option value="Muerte">Muerte</option>
-              <option value="Accidente">Accidente</option>
-              <option value="Protesta">Protesta</option>
-            </select><br><br>
-            <textarea id="observacion-${i}" placeholder="Observación (opcional)" rows="3" cols="25"></textarea><br>
-            <button class="popup-btn" style="background:#007bff; color:white;" onclick="enviarReporte(${i})">Enviar Reporte</button>
-          `);
-        });
-      } catch (err) {
-        console.error("Error al cargar tareas:", err);
-        alert("No se pudieron cargar las tareas.");
-      }
-    }
-
-    function marcarEstado(i, nuevoEstado) {
-      puntos[i].estado = nuevoEstado;
-      alert(`Punto ${i+1} marcado como: ${nuevoEstado}`);
-      // Aquí también se puede actualizar directamente en backend
-    }
-
-    async function enviarReporte(i) {
-      const situacion = document.getElementById(`situacion-${i}`).value;
-      const observacion = document.getElementById(`observacion-${i}`).value;
-
-      const data = {
-        choferId,
-        placa,
-        ubicacion: { lat: puntos[i].ubicacion.lat, lng: puntos[i].ubicacion.lng },
-        estado: puntos[i].estado,
-        situacion,
-        observacion
-      };
-
-      try {
-        const res = await fetch(`${API}/reporte`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        });
-        const result = await res.json();
-        alert("Reporte enviado ✅: " + JSON.stringify(result));
-      } catch (err) {
-        console.error(err);
-        alert("Error al enviar reporte ❌");
-      }
-    }
-
-    cargarTareas();
-  </script>
+  <script src="chofer.js"></script>
 </body>
 </html>
