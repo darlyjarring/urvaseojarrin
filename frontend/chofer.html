@@ -25,7 +25,7 @@
     // Obtener datos de chofer logueado
     const choferId = localStorage.getItem("choferId"); // ⚠️ reemplazar al hacer login real
     const placa = localStorage.getItem("placa") ;
-    const turno = localStorage.getItem("turno") || "07:00-15:00";
+    const turno = localStorage.getItem("turno");
 
     const map = L.map('map').setView([-2.2, -79.9], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
