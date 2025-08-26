@@ -51,7 +51,7 @@ mongoose.connect(mongoUri)
 
 // -------------------- ENDPOINTS --------------------
 
-// Endpoint 1: Verifica el rol del usuario y si es válido
+// Endpoint para verificar el rol del usuario
 app.post("/check-role", async (req, res) => {
   try {
     const { username } = req.body;
@@ -66,7 +66,7 @@ app.post("/check-role", async (req, res) => {
   }
 });
 
-// Endpoint 2: Realiza el login final
+// Endpoint de LOGIN
 app.post("/login", async (req, res) => {
   try {
     const { username, password, placa } = req.body;
@@ -150,11 +150,11 @@ app.put("/placas/:id", async (req, res) => {
 // Endpoints para gestión de RUTAS
 app.post("/rutas", async (req, res) => {
   try {
-    const { nombre, puntos, supervisorId, choferId } = req.body;
+    const { nombre, puntos } = req.body;
     if (!nombre || !puntos || puntos.length === 0) {
       return res.status(400).json({ error: "Nombre y al menos un punto son requeridos" });
     }
-    const nuevaRuta = new Ruta({ nombre, puntos, supervisorId, choferId });
+    const nuevaRuta = new Ruta({ nombre, puntos });
     await nuevaRuta.save();
     res.json({ ok: true, msg: "Ruta registrada con éxito" });
   } catch (err) {
@@ -186,7 +186,7 @@ app.put("/rutas/:id", async (req, res) => {
   }
 });
 
-// Endpoint para actualizar el estado de un punto en una ruta (chofer)
+// Endpoint para actualizar el estado de un punto en una ruta
 app.put("/rutas/:rutaId/puntos/:puntoId", async (req, res) => {
   try {
     const { rutaId, puntoId } = req.params;
@@ -230,7 +230,7 @@ app.post("/tareas", async (req, res) => {
   }
 });
 
-// Endpoint de TAREAS
+// Endpoint de TAREAS (CORREGIDO)
 app.get("/tareas", async (req, res) => {
   try {
     const { placa, turno } = req.query;
