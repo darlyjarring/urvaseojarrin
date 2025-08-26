@@ -13,10 +13,10 @@ map.on('click', function(e) {
   const direccion = prompt("Dirección del punto:");
   if (!direccion) return;
 
+  // 💡 Eliminamos el campo 'estado' de aquí
   const nuevoPunto = {
     nombre: nombre,
     direccion: direccion,
-    estado: "Pendiente",
     lat: e.latlng.lat,
     lng: e.latlng.lng,
   };
@@ -44,19 +44,12 @@ function actualizarListaPuntos() {
   puntos.forEach((p, i) => {
     const div = document.createElement("div");
     div.classList.add("punto-item");
+    // 💡 Quitamos el select de estado
     div.innerHTML = `
       <span>${p.nombre} - ${p.direccion}</span>
-      <select onchange="cambiarEstadoPunto(${i}, this.value)">
-        <option value="Pendiente" ${p.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>        
-        <option value="dañado" ${p.estado === 'dañado' ? 'selected' : ''}>Bloqueado obras</option>
-      </select>
     `;
     container.appendChild(div);
   });
-}
-
-function cambiarEstadoPunto(index, nuevoEstado) {
-  puntos[index].estado = nuevoEstado;
 }
 
 async function guardarRuta() {
