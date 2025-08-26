@@ -55,8 +55,8 @@ async function cargarTareas() {
     rutaIdActual = tarea.rutaId._id;
     
     dibujarRecorrido(puntosRuta);
-    dibujarPuntos(puntosRuta);
-    dibujarTabla(puntosRuta);
+    dibujarPuntos(puntosRuta, tarea.estados_detareaxelemntoderuta);
+    dibujarTabla(puntosRuta, tarea.estados_detareaxelemntoderuta);
     
   } catch (err) {
     console.error("Error al cargar tareas:", err);
@@ -73,20 +73,21 @@ function dibujarRecorrido(puntos) {
   map.fitBounds(polyline.getBounds());
 }
 
-function dibujarPuntos(puntos) {
+function dibujarPuntos(puntosRuta, estadosPuntos) {
   markers.forEach(marker => map.removeLayer(marker));
   markers = [];
   
-  puntos.forEach((p, i) => {
+  puntosRuta.forEach((p, i) => {
+    const estadoEnTarea = estadosPuntos.find(e => e.puntoId === p._id);
     let icon;
-    const estadoMinusculas = p.estado.toLowerCase();
+    const estadoMinusculas = (estadoEnTarea?.estado || p.estado).toLowerCase();
     
     switch (estadoMinusculas) {
       case "en proceso":
         icon = enProcesoIcon;
         break;
       case "ejecutada":
-      case "terminada": // Aceptamos 'terminada' también
+      case "terminada":
         icon = completadaIcon;
         break;
       case "dañado":
@@ -98,46 +99,50 @@ function dibujarPuntos(puntos) {
     
     const marker = L.marker([p.lat, p.lng], { icon: icon }).addTo(map);
 
-    // Manejar el evento de doble clic para reportar novedad
     marker.on('dblclick', (e) => {
-      const estadoActual = p.estado.toLowerCase();
-      if (estadoActual === 'ejecutada' || estadoActual === 'terminada') {
+      if (estadoMinusculas === 'ejecutada' || estadoMinusculas === 'terminada') {
         alert("No se puede reportar una novedad en un punto ya terminado.");
       } else {
         reportarNovedad(p._id, p.lat, p.lng);
       }
     });
 
-    // Manejar el evento de clic para cambiar estado y mostrar opciones
     marker.on('click', async (e) => {
-      const estadoActual = p.estado.toLowerCase();
+      const estadoActual = (estadosPuntos.find(e => e.puntoId === p._id)?.estado || p.estado).toLowerCase();
+
+      let popupContent = `
+        <b>Punto ${i + 1}</b><br>
+        Nombre: ${p.nombre}<br>
+        Dirección: ${p.direccion}<br>
+        Estado de la tarea: ${estadoActual}
+        <hr>
+      `;
 
       if (estadoActual === 'pendiente') {
         // Primer clic: cambia el estado a 'en proceso'
         await marcarPunto(p._id, 'en proceso');
-      } else if (estadoActual === 'en proceso') {
-        // Segundo clic: muestra el popup para finalizar la tarea
-        let popupContent = `
+        // Actualizar el ícono y el popup inmediatamente en el frontend
+        marker.setIcon(enProcesoIcon);
+        marker.setPopupContent(`
           <b>Punto ${i + 1}</b><br>
           Nombre: ${p.nombre}<br>
           Dirección: ${p.direccion}<br>
-          Estado: ${p.estado}
+          Estado de la tarea: en proceso
           <hr>
+          <button onclick="marcarPunto('${p._id}', 'ejecutada')" style="background-color: #28a745; color: white;">Marcar como terminada</button>
+        `).openPopup();
+      } else if (estadoActual === 'en proceso') {
+        // Segundo clic: muestra el popup para finalizar la tarea
+        popupContent += `
           <button onclick="marcarPunto('${p._id}', 'ejecutada')" style="background-color: #28a745; color: white;">Marcar como terminada</button>
         `;
         marker.setPopupContent(popupContent).openPopup();
       } else if (estadoActual === 'ejecutada' || estadoActual === 'terminada') {
         // Si ya está terminada, muestra un mensaje de confirmación
-        let popupContent = `<span>Este punto ya ha sido completado ✅</span>`;
+        popupContent = `<span>Este punto ya ha sido completado ✅</span>`;
         marker.setPopupContent(popupContent).openPopup();
       } else {
         // Para cualquier otro estado, muestra el popup sin botones de acción
-        let popupContent = `
-          <b>Punto ${i + 1}</b><br>
-          Nombre: ${p.nombre}<br>
-          Dirección: ${p.direccion}<br>
-          Estado: ${p.estado}
-        `;
         marker.setPopupContent(popupContent).openPopup();
       }
     });
@@ -146,17 +151,19 @@ function dibujarPuntos(puntos) {
   });
 }
 
-function dibujarTabla(puntos) {
+function dibujarTabla(puntosRuta, estadosPuntos) {
   const tbody = document.querySelector("#tareas-tabla tbody");
   if (!tbody) return;
   tbody.innerHTML = "";
-  puntos.forEach((p, i) => {
+  puntosRuta.forEach((p, i) => {
+    const estadoEnTarea = estadosPuntos.find(e => e.puntoId === p._id);
+    const estadoActual = (estadoEnTarea?.estado || p.estado);
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${i + 1}</td>
       <td>${p.nombre}</td>
       <td>${p.direccion}</td>
-      <td>${p.estado}</td>
+      <td>${estadoActual}</td>
     `;
     tbody.appendChild(tr);
   });
