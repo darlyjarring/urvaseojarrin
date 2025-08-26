@@ -1,16 +1,21 @@
 const mongoose = require("mongoose");
 
 const TareaSchema = new mongoose.Schema({
-  placa: { type: String, required: true },       // Vehículo asignado
-  sector: { type: String, required: true },     // Sector / Ruta
-  ubicacion: { lat: Number, lng: Number },      // Opcional
-  estado: { 
-    type: String, 
-    enum: ["pendiente", "ejecutando", "ejecutada", "reportada"], 
-    default: "pendiente" 
+  placa: { type: String, required: true },
+  sector: { type: String, required: true },
+  // 💡 Referencia a la ruta para poder obtener sus puntos
+  rutaId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Ruta",
+    required: true,
   },
-  turno: { type: String, required: true },      // 07:00-15:00, etc.
-  fecha: { type: Date, default: Date.now }
+  estado: {
+    type: String,
+    enum: ["pendiente", "ejecutando", "ejecutada"],
+    default: "pendiente",
+  },
+  turno: { type: String, required: true },
+  fecha: { type: Date, default: Date.now },
 });
 
 module.exports = mongoose.model("Tarea", TareaSchema);
