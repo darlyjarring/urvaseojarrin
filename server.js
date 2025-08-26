@@ -186,22 +186,32 @@ app.put("/rutas/:id", async (req, res) => {
   }
 });
 
-// Endpoint para actualizar el estado de un punto en una ruta
+// Nuevo endpoint para actualizar el estado de un punto de la tarea
 app.put("/rutas/:rutaId/puntos/:puntoId", async (req, res) => {
   try {
     const { rutaId, puntoId } = req.params;
     const { estado } = req.body;
-    const ruta = await Ruta.findById(rutaId);
-    if (!ruta) {
-      return res.status(404).json({ error: "Ruta no encontrada" });
+    
+    // Buscar la tarea que corresponde a esta ruta
+    const tarea = await Tarea.findOne({ rutaId });
+    if (!tarea) {
+      return res.status(404).json({ error: "Tarea no encontrada para esta ruta" });
     }
-    const punto = ruta.puntos.id(puntoId);
-    if (!punto) {
-      return res.status(404).json({ error: "Punto no encontrado" });
+
+    // Encontrar el punto dentro del nuevo array 'estados_detareaxelemntoderuta'
+    const puntoEnTarea = tarea.estados_detareaxelemntoderuta.find(
+      (p) => p.puntoId.toString() === puntoId
+    );
+
+    if (!puntoEnTarea) {
+      return res.status(404).json({ error: "Punto de tarea no encontrado" });
     }
-    punto.estado = estado;
-    await ruta.save();
-    res.json({ ok: true, msg: "Estado del punto actualizado", punto });
+
+    // Actualizamos el estado del punto de la tarea
+    puntoEnTarea.estado = estado;
+    await tarea.save();
+
+    res.json({ ok: true, msg: "Estado del punto de la tarea actualizado", puntoEnTarea });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error al actualizar el estado del punto" });
