@@ -17,7 +17,7 @@ const TareaSchema = new mongoose.Schema({
     ref: "Ruta",
     required: true,
   },
-  // Nuevo campo para rastrear el estado de cada punto de la ruta
+  // Campo para rastrear el estado de cada punto de la ruta
   estados_detareaxelemntoderuta: [{
     puntoId: { type: mongoose.Schema.Types.ObjectId, required: true },
     estado: {
@@ -25,7 +25,7 @@ const TareaSchema = new mongoose.Schema({
       enum: ["pendiente", "en proceso", "ejecutada", "dañado"],
       default: "pendiente"
     },
-    // Opcional: Para el estado de los contenedores
+    // Estado del contenedor
     estadoContenedor: {
       type: String,
       enum: ["operativo", "dañado"],
