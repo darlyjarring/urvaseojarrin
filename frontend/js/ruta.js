@@ -1,4 +1,4 @@
-const API = "https://urvaseo-backend.onrender.com";
+ const API = "https://urvaseo-backend.onrender.com";
 
 const map = L.map('map').setView([-2.2, -79.9], 13);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
@@ -13,7 +13,6 @@ map.on('click', function(e) {
   const direccion = prompt("Dirección del punto:");
   if (!direccion) return;
 
-  // 💡 Eliminamos el campo 'estado' de aquí
   const nuevoPunto = {
     nombre: nombre,
     direccion: direccion,
@@ -44,7 +43,6 @@ function actualizarListaPuntos() {
   puntos.forEach((p, i) => {
     const div = document.createElement("div");
     div.classList.add("punto-item");
-    // 💡 Quitamos el select de estado
     div.innerHTML = `
       <span>${p.nombre} - ${p.direccion}</span>
     `;
