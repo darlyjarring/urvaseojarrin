@@ -5,11 +5,6 @@ const puntoSchema = new mongoose.Schema({
   lng: { type: Number, required: true },
   nombre: { type: String, required: true },
   direccion: { type: String, required: true },
-  estado: {
-    type: String,
-    enum: ["Pendiente", "En proceso", "Terminada"],
-    default: "Pendiente"
-  },
 });
 
 const rutaSchema = new mongoose.Schema({
