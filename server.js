@@ -143,8 +143,7 @@ app.post("/tareas", async (req, res) => {
   }
 });
 
-// Endpoint para obtener tareas por placa y turno para el chofer
-// Endpoint para obtener tareas. Funciona para choferes y para el panel de administración
+// Endpoint para obtener tareas. Ahora funciona para choferes y para el panel de administración
 app.get("/tareas", async (req, res) => {
   try {
     const { placa, turno } = req.query;
@@ -256,7 +255,7 @@ app.get("/rutas", async (req, res) => {
   }
 });
 
-// 💡 Nuevo endpoint para actualizar el estado de un punto en la tarea
+// Nuevo endpoint para actualizar el estado de un punto en la tarea
 app.put("/rutas/:rutaId/puntos/:puntoId", async (req, res) => {
   try {
     const { rutaId, puntoId } = req.params;
