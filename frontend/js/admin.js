@@ -228,8 +228,10 @@ function actualizarListaPuntos() {
     div.innerHTML = `
       <span>${p.nombre} - ${p.direccion}</span>
       <select onchange="cambiarEstadoPunto(${i}, this.value)">
-        <option value="operativo" ${p.estado === 'operativo' ? 'selected' : ''}>Operativo</option>
-        <option value="dañado" ${p.estado === 'dañado' ? 'selected' : ''}>Dañado</option>
+        <option value="operativo" ${p.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+         <option value="operativo" ${p.estado === 'En proceso' ? 'selected' : ''}>En proceso</option>
+          <option value="operativo" ${p.estado === 'Terminada' ? 'selected' : ''}>Terminada</option>
+        <option value="dañado" ${p.estado === 'dañado' ? 'selected' : ''}>Mantenimiento</option>
       </select>
     `;
     container.appendChild(div);
