@@ -7,7 +7,6 @@ const turno = localStorage.getItem("turno");
 const map = L.map('map').setView([-2.2, -79.9], 13);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-let tareas = [];
 let markers = [];
 let polyline = null;
 let rutaIdActual = null;
@@ -34,15 +33,13 @@ async function cargarTareas() {
       return;
     }
     
-    // 💡 Corrección clave: Accedemos a los puntos a través de la ruta
+    // 💡 Paso crucial: Accedemos a los puntos a través de la rutaId
     const tarea = tareasAsignadas[0];
     const puntosRuta = tarea.rutaId.puntos;
     rutaIdActual = tarea.rutaId._id;
     
-    tareas = puntosRuta; // Asignamos los puntos a la variable global 'tareas'
-
-    dibujarRecorrido(tareas);
-    dibujarPuntos(tareas);
+    dibujarRecorrido(puntosRuta);
+    dibujarPuntos(puntosRuta);
 
   } catch (err) {
     console.error("Error al cargar tareas:", err);
@@ -74,7 +71,7 @@ function dibujarPuntos(puntos) {
 
     let popupContent = `
       <b>Punto ${i + 1}</b><br>
-      Sector: ${p.nombre}<br>
+      Nombre: ${p.nombre}<br>
       Dirección: ${p.direccion}<br>
       Estado: ${p.estado}
       <hr>
