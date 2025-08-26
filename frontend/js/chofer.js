@@ -10,7 +10,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 let tareas = [];
 let markers = [];
 let polyline = null;
-let rutaIdActual = null; // 💡 Guardamos el ID de la ruta actual
+let rutaIdActual = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   if (choferId && placa && turno) {
@@ -24,7 +24,9 @@ document.addEventListener("DOMContentLoaded", () => {
 async function cargarTareas() {
   try {
     const res = await fetch(`${API}/tareas?placa=${placa}&turno=${turno}`);
-    if (!res.ok) throw new Error("Error al obtener tareas del servidor");
+    if (!res.ok) {
+        throw new Error("Error al obtener tareas del servidor");
+    }
 
     const tareasAsignadas = await res.json();
     if (tareasAsignadas.length === 0) {
@@ -32,12 +34,12 @@ async function cargarTareas() {
       return;
     }
     
-    // Obtenemos los puntos de la primera tarea asignada
+    // 💡 Aquí está la corrección: Accedemos a los puntos de la primera tarea
     const tarea = tareasAsignadas[0];
     const puntosRuta = tarea.rutaId.puntos;
-    rutaIdActual = tarea.rutaId._id; // 💡 Guardamos el ID de la ruta
+    rutaIdActual = tarea.rutaId._id;
     
-    tareas = puntosRuta;
+    tareas = puntosRuta; // Asignamos los puntos a la variable global 'tareas'
 
     dibujarRecorrido(tareas);
     dibujarPuntos(tareas);
@@ -78,7 +80,6 @@ function dibujarPuntos(puntos) {
       <hr>
     `;
 
-    // 💡 Si el estado es "operativo" o "dañado", se muestran los botones
     if (p.estado === 'operativo' || p.estado === 'dañado') {
       popupContent += `
         <button onclick="marcarPunto('${p._id}', 'ejecutada')" style="background-color: #28a745; color: white;">Marcar como ejecutada</button>
@@ -93,7 +94,6 @@ function dibujarPuntos(puntos) {
   });
 }
 
-// 💡 Funciones auxiliares
 function getColorEstado(estado) {
   switch (estado.toLowerCase()) {
     case "operativo": return "green";
@@ -135,7 +135,6 @@ async function reportarNovedad(puntoId, lat, lng) {
   }
 }
 
-// 💡 FUNCIÓN MODIFICADA para actualizar el estado y bloquear el punto
 async function marcarPunto(puntoId, nuevoEstado) {
   if (!rutaIdActual) {
     return alert("Error: No se encontró el ID de la ruta.");
@@ -150,7 +149,7 @@ async function marcarPunto(puntoId, nuevoEstado) {
     const result = await res.json();
     if (result.ok) {
       alert(`Punto marcado como: ${nuevoEstado}`);
-      cargarTareas(); // Recargamos para actualizar el mapa y bloquear el punto
+      cargarTareas();
     } else {
       alert("Error al actualizar el estado del punto.");
     }
