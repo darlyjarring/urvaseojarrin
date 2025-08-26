@@ -5,30 +5,26 @@ const TareaSchema = new mongoose.Schema({
   sector: { type: String, required: true },
   turno: { type: String, required: true },
   fecha: { type: Date, default: Date.now },
-  // 💡 Campo general para el estado de la tarea (pendiente hasta que se complete toda la ruta)
+  // Estado general de la tarea.
+  // Será "terminada" solo cuando todos los puntos estén completados.
   estado: {
     type: String,
     enum: ["pendiente", "terminada"],
     default: "pendiente",
   },
-  // Referencia a la ruta para obtener sus puntos
+  // Referencia a la ruta para obtener sus puntos.
   rutaId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Ruta",
     required: true,
   },
-  // Campo para rastrear el estado de cada punto de la ruta
+  // Campo que almacena el estado de cada punto de la ruta individualmente.
+  // Solo con los estados del proceso de trabajo.
   estados_detareaxelemntoderuta: [{
     puntoId: { type: mongoose.Schema.Types.ObjectId, required: true },
     estado: {
       type: String,
-      enum: ["pendiente", "en proceso", "terminada"],
-      default: "pendiente"
-    },
-    // Estado del contenedor
-    estadoContenedor: {
-      type: String,
-      enum: ["pendiente", "en proceso", "terminada"],
+      enum: ["pendiente", "en proceso", "ejecutada"],
       default: "pendiente"
     },
   }],
