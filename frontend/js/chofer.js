@@ -25,7 +25,7 @@ const getIcon = (color) => {
 
 const pendienteIcon = getIcon('blue');
 const enProcesoIcon = getIcon('orange');
-const completadaIcon = getIcon('green');
+const completadaIcon = getIcon('red');
 const danadoIcon = getIcon('red');
 
 // --- Lógica principal ---
