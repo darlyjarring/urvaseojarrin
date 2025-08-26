@@ -34,7 +34,7 @@ async function cargarTareas() {
       return;
     }
     
-    // 💡 Aquí está la corrección: Accedemos a los puntos de la primera tarea
+    // 💡 Corrección clave: Accedemos a los puntos a través de la ruta
     const tarea = tareasAsignadas[0];
     const puntosRuta = tarea.rutaId.puntos;
     rutaIdActual = tarea.rutaId._id;
