@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
         cargarPlacas();
       } else if (targetId === "tareas") {
         cargarPlacasParaSelect();
+        cargarRutasParaDatalist(); // 👈 NUEVA FUNCIÓN
         cargarTareas();
       } else if (targetId === "rutas") {
         inicializarMapa();
@@ -35,6 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Cargar la sección de placas por defecto al iniciar
   cargarPlacas();
   cargarPlacasParaSelect(); // Para la pestaña de tareas
+  cargarRutasParaDatalist(); // 👈 Para la pestaña de tareas
 });
 
 // 🔹 Funciones para la sección de PLACAS
@@ -110,6 +112,19 @@ async function cargarPlacasParaSelect() {
     option.value = p.placa;
     option.text = p.placa;
     placaSelect.add(option);
+  });
+}
+
+// 👈 NUEVA FUNCIÓN PARA CARGAR LAS RUTAS
+async function cargarRutasParaDatalist() {
+  const res = await fetch(`${API}/rutas`);
+  const rutas = await res.json();
+  const rutaList = document.getElementById("rutaList");
+  rutaList.innerHTML = "";
+  rutas.forEach(r => {
+    const option = document.createElement("option");
+    option.value = r.nombre;
+    rutaList.appendChild(option);
   });
 }
 
