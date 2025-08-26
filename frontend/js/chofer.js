@@ -48,6 +48,6 @@
   </div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="chofer.js"></script>
+  <script src="js/chofer.js"></script>
 </body>
 </html>
