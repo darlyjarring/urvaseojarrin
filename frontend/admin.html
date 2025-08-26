@@ -1,136 +1,224 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>URVASEO - Panel de Administración</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #f0f2f5; }
-    .navbar {
-      display: flex;
-      justify-content: flex-start;
-      background-color: #007bff;
-      padding: 10px 20px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .navbar a {
-      color: white;
-      text-decoration: none;
-      padding: 10px 15px;
-      margin: 0 5px;
-      border-radius: 5px;
-      transition: background-color 0.3s;
-    }
-    .navbar a:hover {
-      background-color: #0056b3;
-    }
-    .navbar a.active {
-      background-color: #0056b3;
-    }
-    .content {
-      padding: 20px;
-    }
-    .section { display: none; }
-    .section.active { display: block; }
-    h1, h2, h3 { color: #333; }
-    input, select, button { margin-bottom: 10px; padding: 10px; border-radius: 5px; border: 1px solid #ccc; }
-    button { cursor: pointer; background-color: #28a745; color: white; border: none; }
-    button:hover { background-color: #218838; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-    th { background-color: #f2f2f2; }
-    tr:nth-child(even) { background-color: #f9f9f9; }
-    .status-active { color: green; font-weight: bold; }
-    .status-inactive { color: red; font-weight: bold; }
-    
-    /* Estilos específicos para la sección de rutas */
-    #map { height: 500px; width: 100%; border-radius: 8px; border: 2px solid #ddd; margin-bottom: 20px; }
-    .form-container { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    .punto-item { background: #f9f9f9; border: 1px solid #ddd; padding: 10px; margin-bottom: 5px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - UrvaSeo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background-color: #004d40;
+        }
+        .navbar .nav-link {
+            color: white;
+            padding: 1rem;
+        }
+        .navbar .nav-link:hover {
+            background-color: #00796b;
+        }
+        .container-fluid {
+            padding: 2rem;
+        }
+        .section {
+            display: none;
+        }
+        .section.active {
+            display: block;
+        }
+        .card {
+            margin-bottom: 2rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+        .punto-item {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .punto-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* Estilos específicos para las tablas */
+        .tabla-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+        #tablaTareas {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #tablaTareas th, #tablaTareas td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        #tablaTareas th {
+            background-color: #f2f2f2;
+            color: black;
+        }
+        .detalle-fila {
+            background-color: #f9f9f9;
+        }
+        .detalle-fila td {
+            border-top: none;
+        }
+        .punto-item-lista {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .punto-item-lista li {
+            margin-bottom: 5px;
+        }
+    </style>
 </head>
 <body>
-  <div class="navbar">
-    <a href="#placas" class="active">Gestión de Placas</a>
-    <a href="#rutas">Gestión de Rutas</a>
-    <a href="#tareas">Asignar Tareas</a>
-  </div>
 
-  <div class="content">
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand text-light" href="#">Panel de Administración</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="placas">Gestión de Placas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="tareas">Asignación de Tareas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="rutas">Gestión de Rutas</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
     <div id="placas-section" class="section active">
-      <h2>Gestión de Placas</h2>
-      <h3>Registrar Nueva Placa</h3>
-      <input id="nuevaPlaca" placeholder="Ej: ABC-1234">
-      <select id="estadoPlaca">
-        <option value="true">Activa</option>
-        <option value="false">Inactiva</option>
-      </select>
-      <button onclick="registrarPlaca()">Registrar</button>
-
-      <h3>Listado de Placas</h3>
-      <table id="tablaPlacas">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Placa</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-
-    <div id="rutas-section" class="section">
-      <h2>Gestión de Rutas</h2>
-      <div class="form-container">
-        <h3>Crear Nueva Ruta</h3>
-        <input type="text" id="nombreRuta" placeholder="Nombre de la ruta (Ej: Barrio Cuba)">
-        <p>Haz clic en el mapa para agregar puntos de recolección.</p>
-      </div>
-      
-      <div id="map"></div>
-
-      <div class="form-container">
-        <h3>Puntos de Recolección</h3>
-        <div id="puntosContainer"></div>
-        <button onclick="guardarRuta()">Guardar Ruta</button>
-      </div>
+        <div class="container-fluid">
+            <h2>Gestión de Placas</h2>
+            <div class="card p-4">
+                <h3>Registrar Nueva Placa</h3>
+                <div class="mb-3">
+                    <label for="nuevaPlaca" class="form-label">Número de Placa:</label>
+                    <input type="text" class="form-control" id="nuevaPlaca" placeholder="Ej: GTE8461">
+                </div>
+                <div class="mb-3">
+                    <label for="estadoPlaca" class="form-label">Estado:</label>
+                    <select id="estadoPlaca" class="form-select">
+                        <option value="true">Activa</option>
+                        <option value="false">Inactiva</option>
+                    </select>
+                </div>
+                <button onclick="registrarPlaca()" class="btn btn-primary">Registrar</button>
+            </div>
+    
+            <div class="card p-4 mt-4">
+                <h3>Vehículos Registrados</h3>
+                <table class="table table-hover" id="tablaPlacas">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Placa</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <div id="tareas-section" class="section">
-      <h2>Asignar Tareas</h2>
-      <label for="placaSelect">Selecciona Vehículo (Placa):</label>
-      <select id="placaSelect"></select>
-      <label for="sectorInput">Sector / Ruta:</label>
-      <input id="sectorInput" placeholder="Ej: Ruta Norte" list="rutaList">
-      <datalist id="rutaList"></datalist>
-      <label for="turnoSelect">Turno:</label>
-      <select id="turnoSelect">
-        <option value="07:00-15:00">07:00-15:00</option>
-        <option value="15:00-23:00">15:00-23:00</option>
-        <option value="23:00-07:00">23:00-07:00</option>
-      </select>
-      <button onclick="asignarTarea()">Asignar Tarea</button>
+        <div class="container-fluid">
+            <h2>Gestión de Tareas</h2>
+            <div class="card p-4">
+                <h3>Asignar Nueva Tarea</h3>
+                <div class="mb-3">
+                    <label for="placaSelect" class="form-label">Seleccionar Placa:</label>
+                    <select id="placaSelect" class="form-select"></select>
+                </div>
+                <div class="mb-3">
+                    <label for="sectorInput" class="form-label">Ruta / Sector:</label>
+                    <input list="rutaList" id="sectorInput" class="form-control" placeholder="Escribe para buscar una ruta...">
+                    <datalist id="rutaList"></datalist>
+                </div>
+                <div class="mb-3">
+                    <label for="turnoSelect" class="form-label">Seleccionar Turno:</label>
+                    <select id="turnoSelect" class="form-select">
+                        <option value="07:00-15:00">07:00 - 15:00</option>
+                        <option value="15:00-23:00">15:00 - 23:00</option>
+                        <option value="23:00-07:00">23:00 - 07:00</option>
+                    </select>
+                </div>
+                <button onclick="asignarTarea()" class="btn btn-success">Asignar Tarea</button>
+            </div>
 
-      <hr>
-
-      <h3>Tareas Asignadas</h3>
-      <table id="tablaTareas">
-        <thead>
-          <tr>
-            <th>Placa</th>
-            <th>Sector</th>
-            <th>Turno</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+            <div class="card p-4 mt-4">
+                <h3>Tareas Asignadas</h3>
+                <div class="tabla-container">
+                    <table id="tablaTareas" class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Placa</th>
+                                <th>Sector</th>
+                                <th>Turno</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
+    
+    <div id="rutas-section" class="section">
+        <div class="container-fluid">
+            <h2>Gestión de Rutas</h2>
+            <div class="card p-4">
+                <h3>Crear Nueva Ruta</h3>
+                <div class="mb-3">
+                    <label for="nombreRuta" class="form-label">Nombre de la Ruta:</label>
+                    <input type="text" class="form-control" id="nombreRuta" placeholder="Ej: Ruta Norte 1">
+                </div>
+                <div id="map" class="mb-3"></div>
+                <div id="puntosContainer" class="list-group mb-3"></div>
+                <button onclick="guardarRuta()" class="btn btn-success">Guardar Ruta</button>
+            </div>
+            
+            <div class="card p-4 mt-4">
+                <h3>Rutas Registradas</h3>
+                <div class="tabla-container">
+                    <table id="tablaRutas" class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Ruta</th>
+                                <th>Puntos de Recolección</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script src="js/admin.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="admin.js"></script>
+
 </body>
 </html>
