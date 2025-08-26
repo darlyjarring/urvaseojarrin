@@ -23,10 +23,10 @@ const getIcon = (color) => {
     });
 };
 
-const pendienteIcon = getIcon('blue'); // Usamos azul para "pendiente"
-const enProcesoIcon = getIcon('orange'); // Usamos naranja para "en proceso"
-const completadaIcon = getIcon('green'); // Usamos verde para "ejecutada"
-const danadoIcon = getIcon('red'); // Usamos rojo para "dañado"
+const pendienteIcon = getIcon('blue');
+const enProcesoIcon = getIcon('orange');
+const completadaIcon = getIcon('green');
+const danadoIcon = getIcon('red');
 
 // --- Lógica principal ---
 document.addEventListener("DOMContentLoaded", () => {
@@ -84,6 +84,7 @@ function dibujarPuntos(puntos) {
         icon = enProcesoIcon;
         break;
       case "ejecutada":
+      case "completada": // Agregamos esta opción por si el estado se guarda diferente
         icon = completadaIcon;
         break;
       case "dañado":
@@ -103,8 +104,8 @@ function dibujarPuntos(puntos) {
       <hr>
     `;
 
-    // Solo agregamos los botones si el punto no ha sido completado
-    if (p.estado.toLowerCase() !== 'ejecutada') {
+    // 💡 Lógica corregida: solo se muestran los botones si el estado NO es 'ejecutada' o 'completada'.
+    if (p.estado.toLowerCase() !== 'ejecutada' && p.estado.toLowerCase() !== 'completada') {
       popupContent += `
         <button onclick="marcarPunto('${p._id}', 'ejecutada')" style="background-color: #28a745; color: white;">Marcar como completada</button>
         <button onclick="reportarNovedad('${p._id}', '${p.lat}', '${p.lng}')" style="background-color: #dc3545; color: white;">Reportar Incidente</button>
