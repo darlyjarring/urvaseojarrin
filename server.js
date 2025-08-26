@@ -231,6 +231,7 @@ app.post("/tareas", async (req, res) => {
 });
 
 // Endpoint de TAREAS (CORREGIDO)
+
 app.get("/tareas", async (req, res) => {
   try {
     const { placa, turno } = req.query;
@@ -246,7 +247,6 @@ app.get("/tareas", async (req, res) => {
     res.status(500).json({ error: "Error al obtener las tareas" });
   }
 });
-
 // Endpoints para REPORTES
 app.post("/reporte", async (req, res) => {
   try {
