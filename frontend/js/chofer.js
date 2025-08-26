@@ -11,6 +11,23 @@ let markers = [];
 let polyline = null;
 let rutaIdActual = null;
 
+// --- Definición de Íconos de GPS Personalizados ---
+const getIcon = (color) => {
+    return new L.Icon({
+        iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
+};
+
+const pendienteIcon = getIcon('blue');
+const enProcesoIcon = getIcon('orange');
+const completadaIcon = getIcon('green');
+
+// --- Lógica principal ---
 document.addEventListener("DOMContentLoaded", () => {
   if (choferId && placa && turno) {
     cargarTareas();
@@ -33,15 +50,12 @@ async function cargarTareas() {
       return;
     }
     
-    // 💡 Paso crucial: Accedemos a los puntos a través de la rutaId
     const tarea = tareasAsignadas[0];
     const puntosRuta = tarea.rutaId.puntos;
     rutaIdActual = tarea.rutaId._id;
     
-    // Dibujar en el mapa y en la tabla
     dibujarRecorrido(puntosRuta);
     dibujarPuntos(puntosRuta);
-    dibujarTabla(puntosRuta); // 💡 Nueva llamada para llenar la tabla
 
   } catch (err) {
     console.error("Error al cargar tareas:", err);
@@ -63,13 +77,19 @@ function dibujarPuntos(puntos) {
   markers = [];
   
   puntos.forEach((p, i) => {
-    const color = getColorEstado(p.estado);
-    const marker = L.circleMarker([p.lat, p.lng], {
-      radius: 8,
-      color: color,
-      fillColor: color,
-      fillOpacity: 0.8
-    }).addTo(map);
+    let icon;
+    switch (p.estado.toLowerCase()) {
+      case "en proceso":
+        icon = enProcesoIcon;
+        break;
+      case "ejecutada": // Lo que llamas 'completada' en el frontend es 'ejecutada' en tu backend
+        icon = completadaIcon;
+        break;
+      default: // 'pendiente' o cualquier otro
+        icon = pendienteIcon;
+    }
+    
+    const marker = L.marker([p.lat, p.lng], { icon: icon }).addTo(map);
 
     let popupContent = `
       <b>Punto ${i + 1}</b><br>
@@ -79,13 +99,14 @@ function dibujarPuntos(puntos) {
       <hr>
     `;
 
-    if (p.estado === 'operativo' || p.estado === 'dañado') {
+    // 💡 Solo agregamos los botones si el punto no ha sido completado
+    if (p.estado.toLowerCase() !== 'ejecutada') {
       popupContent += `
-        <button onclick="marcarPunto('${p._id}', 'ejecutada')" style="background-color: #28a745; color: white;">Marcar como ejecutada</button>
+        <button onclick="marcarPunto('${p._id}', 'ejecutada')" style="background-color: #28a745; color: white;">Marcar como completada</button>
         <button onclick="reportarNovedad('${p._id}', '${p.lat}', '${p.lng}')" style="background-color: #dc3545; color: white;">Reportar Incidente</button>
       `;
     } else {
-      popupContent += `<span>Este punto ya ha sido procesado ✅</span>`;
+      popupContent += `<span>Este punto ya ha sido completado ✅</span>`;
     }
     
     marker.bindPopup(popupContent);
@@ -93,33 +114,8 @@ function dibujarPuntos(puntos) {
   });
 }
 
-function dibujarTabla(puntos) {
-  const tbody = document.querySelector("#tareas-tabla tbody");
-  tbody.innerHTML = ""; // Limpiar tabla
-
-  puntos.forEach((p, i) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${i + 1}</td>
-      <td>${p.nombre}</td>
-      <td>${p.direccion}</td>
-      <td>${p.estado}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-function getColorEstado(estado) {
-  switch (estado.toLowerCase()) {
-    case "operativo": return "green";
-    case "dañado": return "red";
-    case "ejecutada": return "blue";
-    default: return "gray";
-  }
-}
-
 async function reportarNovedad(puntoId, lat, lng) {
-  const novedad = prompt("¿Qué tipo de novedad desea reportar? (Ej: daño, robo, secuestro, atentado, muerte, accidente)");
+  const novedad = prompt("¿Qué tipo de novedad desea reportar? (Ej: daño, robo, accidente)");
   if (!novedad) return;
 
   const descripcion = prompt("Describa el incidente (opcional):");
@@ -141,6 +137,7 @@ async function reportarNovedad(puntoId, lat, lng) {
     const result = await res.json();
     if (result.ok) {
       alert("Reporte enviado con éxito ✅");
+      cargarTareas();
     } else {
       alert("Error al enviar el reporte.");
     }
