@@ -3,19 +3,29 @@ const mongoose = require("mongoose");
 const TareaSchema = new mongoose.Schema({
   placa: { type: String, required: true },
   sector: { type: String, required: true },
-  // 💡 Referencia a la ruta para poder obtener sus puntos
+  turno: { type: String, required: true },
+  fecha: { type: Date, default: Date.now },
+  // Referencia a la ruta para obtener sus puntos
   rutaId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Ruta",
     required: true,
   },
-  estado: {
-    type: String,
-    enum: ["pendiente", "ejecutando", "ejecutada"],
-    default: "pendiente",
-  },
-  turno: { type: String, required: true },
-  fecha: { type: Date, default: Date.now },
+  // Nuevo campo para rastrear el estado de cada punto de la ruta
+  estados_detareaxelemntoderuta: [{
+    puntoId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    estado: {
+      type: String,
+      enum: ["pendiente", "en proceso", "ejecutada", "dañado"],
+      default: "pendiente"
+    },
+    // Opcional: Para el estado de los contenedores
+    estadoContenedor: {
+      type: String,
+      enum: ["operativo", "dañado"],
+      default: "operativo"
+    },
+  }],
 });
 
 module.exports = mongoose.model("Tarea", TareaSchema);
