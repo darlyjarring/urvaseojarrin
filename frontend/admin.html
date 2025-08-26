@@ -9,18 +9,19 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         body {
-            background-color: #212529;
-            color: #f8f9fa;
+            background-color: #f0f2f5; /* Fondo claro */
+            color: #333;
         }
         .navbar {
-            background-color: #343a40;
+            background-color: #007bff; /* Tono de azul para la barra de navegación */
+            color: white;
         }
-        .navbar .nav-link {
-            color: #f8f9fa;
-            padding: 1rem;
+        .navbar-brand, .navbar-nav .nav-link {
+            color: white !important;
         }
-        .navbar .nav-link:hover {
-            background-color: #495057;
+        .navbar-nav .nav-link.active {
+            background-color: #0056b3; /* Tono de azul más oscuro para la opción activa */
+            border-radius: 5px;
         }
         .container-fluid {
             padding: 2rem;
@@ -33,67 +34,64 @@
         }
         .card {
             margin-bottom: 2rem;
-            background-color: #343a40;
-            border: 1px solid #495057;
+            background-color: #fff;
+            border: 1px solid #ccc;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        .card h2, .card h3 {
-            color: #f8f9fa;
+        h2 {
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+        h3 {
+            color: #555;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
         }
         label {
-            color: #adb5bd;
+            font-weight: bold;
         }
         .form-control, .form-select {
-            background-color: #495057;
-            color: #f8f9fa;
-            border: 1px solid #6c757d;
+            border: 1px solid #ccc;
         }
-        .form-control::placeholder {
-            color: #adb5bd;
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
         }
         #map {
             height: 500px;
             width: 100%;
         }
-        .punto-item {
-            padding: 10px;
-            border-bottom: 1px solid #495057;
+        .table th, .table td {
+            text-align: left;
+            vertical-align: middle;
         }
-        .punto-item:last-child {
-            border-bottom: none;
+        .table-hover tbody tr:hover {
+            background-color: #f5f5f5;
         }
-        
         /* Estilos específicos para las tablas */
         .tabla-container {
             width: 100%;
             overflow-x: auto;
         }
         .table {
-            color: #f8f9fa;
+            border: 1px solid #dee2e6;
         }
         .table th, .table td {
-            border: 1px solid #495057;
+            border: 1px solid #dee2e6;
             padding: 8px;
             text-align: left;
         }
         .table thead th {
-            background-color: #495057;
-            color: #f8f9fa;
+            background-color: #e9ecef;
         }
         .detalle-fila {
-            background-color: #495057;
-        }
-        .detalle-fila td {
-            border-top: none;
-        }
-        .punto-item-lista {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-        }
-        .punto-item-lista li {
-            margin-bottom: 5px;
+            background-color: #f8f9fa;
         }
     </style>
 </head>
@@ -101,17 +99,17 @@
 
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
-            <a class="navbar-brand text-light" href="#">Panel de Administración</a>
+            <a class="navbar-brand" href="#">Panel de Administración</a>
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
                         <a class="nav-link active" href="placas">Gestión de Placas</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="tareas">Asignación de Tareas</a>
+                        <a class="nav-link" href="rutas">Gestión de Rutas</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="rutas">Gestión de Rutas</a>
+                        <a class="nav-link" href="tareas">Asignar Tareas</a>
                     </li>
                 </ul>
             </div>
@@ -125,7 +123,7 @@
                 <h3>Registrar Nueva Placa</h3>
                 <div class="mb-3">
                     <label for="nuevaPlaca" class="form-label">Número de Placa:</label>
-                    <input type="text" class="form-control" id="nuevaPlaca" placeholder="Ej: GTE8461">
+                    <input type="text" class="form-control" id="nuevaPlaca" placeholder="Ej: ABC-1234">
                 </div>
                 <div class="mb-3">
                     <label for="estadoPlaca" class="form-label">Estado:</label>
@@ -134,11 +132,11 @@
                         <option value="false">Inactiva</option>
                     </select>
                 </div>
-                <button onclick="registrarPlaca()" class="btn btn-primary">Registrar</button>
+                <button onclick="registrarPlaca()" class="btn btn-success">Registrar</button>
             </div>
     
             <div class="card p-4 mt-4">
-                <h3>Vehículos Registrados</h3>
+                <h3>Listado de Placas</h3>
                 <table class="table table-hover" id="tablaPlacas">
                     <thead>
                         <tr>
@@ -155,51 +153,6 @@
         </div>
     </div>
 
-    <div id="tareas-section" class="section">
-        <div class="container-fluid">
-            <h2>Gestión de Tareas</h2>
-            <div class="card p-4">
-                <h3>Asignar Nueva Tarea</h3>
-                <div class="mb-3">
-                    <label for="placaSelect" class="form-label">Seleccionar Placa:</label>
-                    <select id="placaSelect" class="form-select"></select>
-                </div>
-                <div class="mb-3">
-                    <label for="sectorInput" class="form-label">Ruta / Sector:</label>
-                    <input list="rutaList" id="sectorInput" class="form-control" placeholder="Escribe para buscar una ruta...">
-                    <datalist id="rutaList"></datalist>
-                </div>
-                <div class="mb-3">
-                    <label for="turnoSelect" class="form-label">Seleccionar Turno:</label>
-                    <select id="turnoSelect" class="form-select">
-                        <option value="07:00-15:00">07:00 - 15:00</option>
-                        <option value="15:00-23:00">15:00 - 23:00</option>
-                        <option value="23:00-07:00">23:00 - 07:00</option>
-                    </select>
-                </div>
-                <button onclick="asignarTarea()" class="btn btn-success">Asignar Tarea</button>
-            </div>
-
-            <div class="card p-4 mt-4">
-                <h3>Tareas Asignadas</h3>
-                <div class="tabla-container">
-                    <table id="tablaTareas" class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Placa</th>
-                                <th>Sector</th>
-                                <th>Turno</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-    
     <div id="rutas-section" class="section">
         <div class="container-fluid">
             <h2>Gestión de Rutas</h2>
@@ -232,8 +185,51 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/admin.js"></script>
+    <div id="tareas-section" class="section">
+        <div class="container-fluid">
+            <h2>Asignar Tareas</h2>
+            <div class="card p-4">
+                <h3>Asignar Nueva Tarea</h3>
+                <div class="mb-3">
+                    <label for="placaSelect" class="form-label">Seleccionar Placa:</label>
+                    <select id="placaSelect" class="form-select"></select>
+                </div>
+                <div class="mb-3">
+                    <label for="sectorInput" class="form-label">Ruta / Sector:</label>
+                    <input list="rutaList" id="sectorInput" class="form-control" placeholder="Escribe para buscar una ruta...">
+                    <datalist id="rutaList"></datalist>
+                </div>
+                <div class="mb-3">
+                    <label for="turnoSelect" class="form-label">Seleccionar Turno:</label>
+                    <select id="turnoSelect" class="form-select">
+                        <option value="07:00-15:00">07:00 - 15:00</option>
+                        <option value="15:00-23:00">15:00 - 23:00</option>
+                        <option value="23:00-07:00">23:00 - 07:00</option>
+                    </select>
+                </div>
+                <button onclick="asignarTarea()" class="btn btn-success">Asignar Tarea</button>
+            </div>
+            <div class="card p-4 mt-4">
+                <h3>Tareas Asignadas</h3>
+                <div class="tabla-container">
+                    <table id="tablaTareas" class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Placa</th>
+                                <th>Sector</th>
+                                <th>Turno</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="admin.js"></script>
 </body>
 </html>
