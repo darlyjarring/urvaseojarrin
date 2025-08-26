@@ -79,12 +79,14 @@ function dibujarPuntos(puntos) {
   
   puntos.forEach((p, i) => {
     let icon;
-    switch (p.estado.toLowerCase()) {
+    const estadoMinusculas = p.estado.toLowerCase();
+    
+    switch (estadoMinusculas) {
       case "en proceso":
         icon = enProcesoIcon;
         break;
       case "ejecutada":
-      case "completada": // Agregamos esta opción por si el estado se guarda diferente
+      case "completada":
         icon = completadaIcon;
         break;
       case "dañado":
@@ -96,25 +98,49 @@ function dibujarPuntos(puntos) {
     
     const marker = L.marker([p.lat, p.lng], { icon: icon }).addTo(map);
 
-    let popupContent = `
-      <b>Punto ${i + 1}</b><br>
-      Nombre: ${p.nombre}<br>
-      Dirección: ${p.direccion}<br>
-      Estado: ${p.estado}
-      <hr>
-    `;
+    // Manejar el evento de doble clic para reportar novedad
+    marker.on('dblclick', (e) => {
+      // Evita que la novedad se reporte en puntos completados
+      if (p.estado.toLowerCase() === 'ejecutada' || p.estado.toLowerCase() === 'completada') {
+        alert("No se puede reportar una novedad en un punto ya completado.");
+      } else {
+        reportarNovedad(p._id, p.lat, p.lng);
+      }
+    });
 
-    // 💡 Lógica corregida: solo se muestran los botones si el estado NO es 'ejecutada' o 'completada'.
-    if (p.estado.toLowerCase() !== 'ejecutada' && p.estado.toLowerCase() !== 'completada') {
-      popupContent += `
-        <button onclick="marcarPunto('${p._id}', 'ejecutada')" style="background-color: #28a745; color: white;">Marcar como completada</button>
-        <button onclick="reportarNovedad('${p._id}', '${p.lat}', '${p.lng}')" style="background-color: #dc3545; color: white;">Reportar Incidente</button>
+    // Manejar el evento de clic para cambiar estado
+    marker.on('click', async (e) => {
+      let popupContent = `
+        <b>Punto ${i + 1}</b><br>
+        Nombre: ${p.nombre}<br>
+        Dirección: ${p.direccion}<br>
+        Estado: ${p.estado}
+        <hr>
       `;
-    } else {
-      popupContent += `<span>Este punto ya ha sido completado ✅</span>`;
-    }
+
+      if (p.estado.toLowerCase() === 'pendiente') {
+        // Si el estado es pendiente, cambiar a 'en proceso' con el primer clic
+        await marcarPunto(p._id, 'en proceso');
+      } else if (p.estado.toLowerCase() === 'en proceso') {
+        // Si el estado es en proceso, mostrar los botones para completar la tarea
+        popupContent += `
+          <button onclick="marcarPunto('${p._id}', 'ejecutada')" style="background-color: #28a745; color: white;">Marcar como completada</button>
+        `;
+        marker.setPopupContent(popupContent).openPopup();
+      } else if (p.estado.toLowerCase() === 'ejecutada') {
+        // Si el estado es ejecutada, mostrar mensaje de finalización
+        popupContent += `<span>Este punto ya ha sido completado ✅</span>`;
+        marker.setPopupContent(popupContent).openPopup();
+      } else if (p.estado.toLowerCase() === 'dañado') {
+        // Si el estado es dañado, mostrar mensaje
+        popupContent += `<span>Este punto tiene una novedad y no puede ser completado.</span>`;
+        marker.setPopupContent(popupContent).openPopup();
+      } else {
+        // Para cualquier otro estado, mostrar el estado actual
+        marker.setPopupContent(popupContent).openPopup();
+      }
+    });
     
-    marker.bindPopup(popupContent);
     markers.push(marker);
   });
 }
@@ -142,7 +168,8 @@ async function reportarNovedad(puntoId, lat, lng) {
     const result = await res.json();
     if (result.ok) {
       alert("Reporte enviado con éxito ✅");
-      cargarTareas();
+      // Opcionalmente, puedes cambiar el estado del punto a 'dañado' después de reportar
+      await marcarPunto(puntoId, 'dañado');
     } else {
       alert("Error al enviar el reporte.");
     }
