@@ -11,22 +11,19 @@ let markers = [];
 let polyline = null;
 let rutaIdActual = null;
 
-// --- Definición de Íconos de GPS Personalizados ---
-const getIcon = (color) => {
-    return new L.Icon({
-        iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
+// --- Definición de Íconos Personalizados con AwesomeMarkers ---
+const getAwesomeIcon = (color, icon) => {
+    return L.AwesomeMarkers.icon({
+        icon: icon,
+        markerColor: color,
+        prefix: 'fa' // Usa íconos de Font Awesome
     });
 };
 
-const pendienteIcon = getIcon('blue');
-const enProcesoIcon = getIcon('orange');
-const completadaIcon = getIcon('red');
-const danadoIcon = getIcon('red');
+const pendienteIcon = getAwesomeIcon('blue', 'fa-map-marker-alt');
+const enProcesoIcon = getAwesomeIcon('orange', 'fa-map-marker-alt');
+const completadaIcon = getAwesomeIcon('green', 'fa-map-marker-alt');
+const danadoIcon = getAwesomeIcon('red', 'fa-map-marker-alt');
 
 // --- Lógica principal ---
 document.addEventListener("DOMContentLoaded", () => {
@@ -92,7 +89,7 @@ function dibujarPuntos(puntos) {
       case "dañado":
         icon = danadoIcon;
         break;
-      default: // 'pendiente' o cualquier otro
+      default:
         icon = pendienteIcon;
     }
     
@@ -100,7 +97,6 @@ function dibujarPuntos(puntos) {
 
     // Manejar el evento de doble clic para reportar novedad
     marker.on('dblclick', (e) => {
-      // Evita que la novedad se reporte en puntos completados
       if (p.estado.toLowerCase() === 'ejecutada' || p.estado.toLowerCase() === 'completada') {
         alert("No se puede reportar una novedad en un punto ya completado.");
       } else {
@@ -119,24 +115,19 @@ function dibujarPuntos(puntos) {
       `;
 
       if (p.estado.toLowerCase() === 'pendiente') {
-        // Si el estado es pendiente, cambiar a 'en proceso' con el primer clic
         await marcarPunto(p._id, 'en proceso');
       } else if (p.estado.toLowerCase() === 'en proceso') {
-        // Si el estado es en proceso, mostrar los botones para completar la tarea
         popupContent += `
           <button onclick="marcarPunto('${p._id}', 'ejecutada')" style="background-color: #28a745; color: white;">Marcar como completada</button>
         `;
         marker.setPopupContent(popupContent).openPopup();
-      } else if (p.estado.toLowerCase() === 'ejecutada') {
-        // Si el estado es ejecutada, mostrar mensaje de finalización
+      } else if (p.estado.toLowerCase() === 'ejecutada' || p.estado.toLowerCase() === 'completada') {
         popupContent += `<span>Este punto ya ha sido completado ✅</span>`;
         marker.setPopupContent(popupContent).openPopup();
       } else if (p.estado.toLowerCase() === 'dañado') {
-        // Si el estado es dañado, mostrar mensaje
         popupContent += `<span>Este punto tiene una novedad y no puede ser completado.</span>`;
         marker.setPopupContent(popupContent).openPopup();
       } else {
-        // Para cualquier otro estado, mostrar el estado actual
         marker.setPopupContent(popupContent).openPopup();
       }
     });
@@ -168,7 +159,6 @@ async function reportarNovedad(puntoId, lat, lng) {
     const result = await res.json();
     if (result.ok) {
       alert("Reporte enviado con éxito ✅");
-      // Opcionalmente, puedes cambiar el estado del punto a 'dañado' después de reportar
       await marcarPunto(puntoId, 'dañado');
     } else {
       alert("Error al enviar el reporte.");
