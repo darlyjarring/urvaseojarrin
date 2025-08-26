@@ -51,6 +51,21 @@ mongoose.connect(mongoUri)
 
 // -------------------- ENDPOINTS --------------------
 
+// 💡 Nuevo endpoint para verificar el rol del usuario
+app.post("/check-role", async (req, res) => {
+  try {
+    const { username } = req.body;
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+    res.json({ role: user.role });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error en el servidor" });
+  }
+});
+
 // Endpoint de LOGIN
 app.post("/login", async (req, res) => {
   try {
@@ -215,7 +230,7 @@ app.post("/tareas", async (req, res) => {
   }
 });
 
-// 💡 Endpoint de TAREAS corregido: ahora permite consultar todas las tareas sin parámetros
+// Endpoint de TAREAS
 app.get("/tareas", async (req, res) => {
   try {
     const { placa, turno } = req.query;
