@@ -280,6 +280,36 @@ app.get("/reportes", async (req, res) => {
   }
 });
 
+// Endpoint para asignar una tarea
+app.post("/tareas", async (req, res) => {
+  try {
+    const { placa, sector, turno } = req.body;
+    const ruta = await Ruta.findOne({ nombre: sector });
+    if (!ruta) {
+      return res.status(404).json({ error: "Ruta no encontrada" });
+    }
+
+    // Inicializa el nuevo campo con el estado 'pendiente' para cada punto de la ruta
+    const estadosIniciales = ruta.puntos.map(punto => ({
+      puntoId: punto._id,
+      estado: "pendiente"
+    }));
+
+    const nuevaTarea = new Tarea({
+      placa,
+      sector,
+      turno,
+      rutaId: ruta._id,
+      estados_detareaxelemntoderuta: estadosIniciales,
+    });
+    await nuevaTarea.save();
+
+    res.status(201).json({ ok: true, msg: "Tarea asignada con éxito" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al asignar la tarea" });
+  }
+});
 // -------------------- PUERTO --------------------
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`🚀 Backend corriendo en puerto ${PORT}`));
