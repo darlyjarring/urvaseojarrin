@@ -16,7 +16,7 @@ map.on('click', function(e) {
   const nuevoPunto = {
     nombre: nombre,
     direccion: direccion,
-    estado: "operativo",
+    estado: "Pendiente",
     lat: e.latlng.lat,
     lng: e.latlng.lng,
   };
@@ -47,8 +47,8 @@ function actualizarListaPuntos() {
     div.innerHTML = `
       <span>${p.nombre} - ${p.direccion}</span>
       <select onchange="cambiarEstadoPunto(${i}, this.value)">
-        <option value="operativo" ${p.estado === 'operativo' ? 'selected' : ''}>Operativo</option>
-        <option value="dañado" ${p.estado === 'dañado' ? 'selected' : ''}>Dañado</option>
+        <option value="Pendiente" ${p.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>        
+        <option value="dañado" ${p.estado === 'dañado' ? 'selected' : ''}>Bloqueado obras</option>
       </select>
     `;
     container.appendChild(div);
