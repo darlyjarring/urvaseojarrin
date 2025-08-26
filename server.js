@@ -144,14 +144,20 @@ app.post("/tareas", async (req, res) => {
 });
 
 // Endpoint para obtener tareas por placa y turno para el chofer
+// Endpoint para obtener tareas. Funciona para choferes y para el panel de administración
 app.get("/tareas", async (req, res) => {
   try {
     const { placa, turno } = req.query;
-    if (!placa || !turno) {
-      return res.status(400).json({ error: "Placa y turno son requeridos" });
+    let tareas;
+
+    // Si recibimos 'placa' y 'turno', filtramos las tareas para el chofer
+    if (placa && turno) {
+      tareas = await Tarea.find({ placa, turno }).populate("rutaId");
+    } else {
+      // Si no, devolvemos todas las tareas para el administrador
+      tareas = await Tarea.find({}).populate("rutaId");
     }
-    // Populateamos la ruta para obtener sus puntos
-    const tareas = await Tarea.find({ placa, turno }).populate("rutaId");
+    
     res.json(tareas);
   } catch (err) {
     console.error(err);
