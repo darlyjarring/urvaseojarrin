@@ -22,14 +22,14 @@ const TareaSchema = new mongoose.Schema({
     puntoId: { type: mongoose.Schema.Types.ObjectId, required: true },
     estado: {
       type: String,
-      enum: ["pendiente", "en proceso", "ejecutada", "dañado"],
+      enum: ["pendiente", "en proceso", "terminada"],
       default: "pendiente"
     },
     // Estado del contenedor
     estadoContenedor: {
       type: String,
-      enum: ["operativo", "dañado"],
-      default: "operativo"
+      enum: ["pendiente", "en proceso", "terminada"],
+      default: "pendiente"
     },
   }],
 });
