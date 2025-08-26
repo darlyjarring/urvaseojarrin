@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
         cargarPlacas();
       } else if (targetId === "tareas") {
         cargarPlacasParaSelect();
-        cargarRutasParaDatalist(); // 👈 NUEVA FUNCIÓN
+        cargarRutasParaDatalist();
         cargarTareas();
       } else if (targetId === "rutas") {
         inicializarMapa();
@@ -35,8 +35,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Cargar la sección de placas por defecto al iniciar
   cargarPlacas();
-  cargarPlacasParaSelect(); // Para la pestaña de tareas
-  cargarRutasParaDatalist(); // 👈 Para la pestaña de tareas
 });
 
 // 🔹 Funciones para la sección de PLACAS
@@ -115,7 +113,6 @@ async function cargarPlacasParaSelect() {
   });
 }
 
-// 👈 NUEVA FUNCIÓN PARA CARGAR LAS RUTAS
 async function cargarRutasParaDatalist() {
   const res = await fetch(`${API}/rutas`);
   const rutas = await res.json();
@@ -149,21 +146,32 @@ async function asignarTarea() {
   cargarTareas();
 }
 
+// 💡 FUNCIÓN CORREGIDA
 async function cargarTareas() {
-  const res = await fetch(`${API}/tareas`);
-  const tareas = await res.json();
   const tbody = document.querySelector("#tablaTareas tbody");
-  tbody.innerHTML = "";
-  tareas.forEach(t => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${t.placa}</td>
-      <td>${t.sector}</td>
-      <td>${t.turno}</td>
-      <td>${t.estado}</td>
-    `;
-    tbody.appendChild(tr);
-  });
+  try {
+    const res = await fetch(`${API}/tareas`);
+    if (!res.ok) {
+        throw new Error(`HTTP error! Status: ${res.status}`);
+    }
+    const tareas = await res.json();
+    
+    tbody.innerHTML = "";
+
+    tareas.forEach(t => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${t.placa}</td>
+        <td>${t.sector}</td>
+        <td>${t.turno}</td>
+        <td>${t.estado}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (error) {
+    console.error("Error al cargar las tareas:", error);
+    tbody.innerHTML = "<tr><td colspan='4'>Error al cargar las tareas. Revisa la consola para más detalles.</td></tr>";
+  }
 }
 
 // 🔹 Funciones para la sección de RUTAS
