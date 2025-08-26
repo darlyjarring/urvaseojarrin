@@ -56,8 +56,7 @@ async function cargarTareas() {
     
     dibujarRecorrido(puntosRuta);
     dibujarPuntos(puntosRuta);
-    dibujarTabla(puntosRuta); // Llama a la función para dibujar la tabla
-    console.log("Datos de los puntos de la ruta cargados:", puntosRuta); // Para depuración
+    dibujarTabla(puntosRuta);
     
   } catch (err) {
     console.error("Error al cargar tareas:", err);
@@ -87,7 +86,7 @@ function dibujarPuntos(puntos) {
         icon = enProcesoIcon;
         break;
       case "ejecutada":
-      case "completada":
+      case "terminada": // Aceptamos 'terminada' también
         icon = completadaIcon;
         break;
       case "dañado":
@@ -99,37 +98,46 @@ function dibujarPuntos(puntos) {
     
     const marker = L.marker([p.lat, p.lng], { icon: icon }).addTo(map);
 
+    // Manejar el evento de doble clic para reportar novedad
     marker.on('dblclick', (e) => {
-      if (estadoMinusculas === 'ejecutada' || estadoMinusculas === 'completada') {
-        alert("No se puede reportar una novedad en un punto ya completado.");
+      const estadoActual = p.estado.toLowerCase();
+      if (estadoActual === 'ejecutada' || estadoActual === 'terminada') {
+        alert("No se puede reportar una novedad en un punto ya terminado.");
       } else {
         reportarNovedad(p._id, p.lat, p.lng);
       }
     });
 
+    // Manejar el evento de clic para cambiar estado y mostrar opciones
     marker.on('click', async (e) => {
-      let popupContent = `
-        <b>Punto ${i + 1}</b><br>
-        Nombre: ${p.nombre}<br>
-        Dirección: ${p.direccion}<br>
-        Estado: ${p.estado}
-        <hr>
-      `;
+      const estadoActual = p.estado.toLowerCase();
 
-      if (estadoMinusculas === 'pendiente') {
+      if (estadoActual === 'pendiente') {
+        // Primer clic: cambia el estado a 'en proceso'
         await marcarPunto(p._id, 'en proceso');
-      } else if (estadoMinusculas === 'en proceso') {
-        popupContent += `
-          <button onclick="marcarPunto('${p._id}', 'ejecutada')" style="background-color: #28a745; color: white;">Marcar como completada</button>
+      } else if (estadoActual === 'en proceso') {
+        // Segundo clic: muestra el popup para finalizar la tarea
+        let popupContent = `
+          <b>Punto ${i + 1}</b><br>
+          Nombre: ${p.nombre}<br>
+          Dirección: ${p.direccion}<br>
+          Estado: ${p.estado}
+          <hr>
+          <button onclick="marcarPunto('${p._id}', 'ejecutada')" style="background-color: #28a745; color: white;">Marcar como terminada</button>
         `;
         marker.setPopupContent(popupContent).openPopup();
-      } else if (estadoMinusculas === 'ejecutada' || estadoMinusculas === 'completada') {
-        popupContent += `<span>Este punto ya ha sido completado ✅</span>`;
-        marker.setPopupContent(popupContent).openPopup();
-      } else if (estadoMinusculas === 'dañado') {
-        popupContent += `<span>Este punto tiene una novedad y no puede ser completado.</span>`;
+      } else if (estadoActual === 'ejecutada' || estadoActual === 'terminada') {
+        // Si ya está terminada, muestra un mensaje de confirmación
+        let popupContent = `<span>Este punto ya ha sido completado ✅</span>`;
         marker.setPopupContent(popupContent).openPopup();
       } else {
+        // Para cualquier otro estado, muestra el popup sin botones de acción
+        let popupContent = `
+          <b>Punto ${i + 1}</b><br>
+          Nombre: ${p.nombre}<br>
+          Dirección: ${p.direccion}<br>
+          Estado: ${p.estado}
+        `;
         marker.setPopupContent(popupContent).openPopup();
       }
     });
