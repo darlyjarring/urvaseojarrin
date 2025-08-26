@@ -9,17 +9,18 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         body {
-            background-color: #f8f9fa;
+            background-color: #212529;
+            color: #f8f9fa;
         }
         .navbar {
-            background-color: #004d40;
+            background-color: #343a40;
         }
         .navbar .nav-link {
-            color: white;
+            color: #f8f9fa;
             padding: 1rem;
         }
         .navbar .nav-link:hover {
-            background-color: #00796b;
+            background-color: #495057;
         }
         .container-fluid {
             padding: 2rem;
@@ -32,9 +33,24 @@
         }
         .card {
             margin-bottom: 2rem;
-            border: 1px solid #e0e0e0;
+            background-color: #343a40;
+            border: 1px solid #495057;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        .card h2, .card h3 {
+            color: #f8f9fa;
+        }
+        label {
+            color: #adb5bd;
+        }
+        .form-control, .form-select {
+            background-color: #495057;
+            color: #f8f9fa;
+            border: 1px solid #6c757d;
+        }
+        .form-control::placeholder {
+            color: #adb5bd;
         }
         #map {
             height: 500px;
@@ -42,7 +58,7 @@
         }
         .punto-item {
             padding: 10px;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #495057;
         }
         .punto-item:last-child {
             border-bottom: none;
@@ -53,21 +69,20 @@
             width: 100%;
             overflow-x: auto;
         }
-        #tablaTareas {
-            width: 100%;
-            border-collapse: collapse;
+        .table {
+            color: #f8f9fa;
         }
-        #tablaTareas th, #tablaTareas td {
-            border: 1px solid #ddd;
+        .table th, .table td {
+            border: 1px solid #495057;
             padding: 8px;
             text-align: left;
         }
-        #tablaTareas th {
-            background-color: #f2f2f2;
-            color: black;
+        .table thead th {
+            background-color: #495057;
+            color: #f8f9fa;
         }
         .detalle-fila {
-            background-color: #f9f9f9;
+            background-color: #495057;
         }
         .detalle-fila td {
             border-top: none;
@@ -218,7 +233,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/admin.js"></script>
+    <script src="admin.js"></script>
 
 </body>
 </html>
