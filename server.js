@@ -265,6 +265,142 @@ app.put("/rutas/:id", async (req, res) => {
   }
 });
 
+// 💡 Nuevo endpoint para actualizar el estado de un punto
+app.put("/rutas/:rutaId/puntos/:puntoId", async (req, res) => {
+  try {
+    const { rutaId, puntoId } = req.params;
+    const { estado } = req.body;
+
+    // Buscamos la ruta y el punto dentro de ella
+    const ruta = await Ruta.findById(rutaId);
+    if (!ruta) {
+      return res.status(404).json({ error: "Ruta no encontrada" });
+    }
+
+    const punto = ruta.puntos.id(puntoId);
+    if (!punto) {
+      return res.status(404).json({ error: "Punto no encontrado" });
+    }
+
+    // Actualizamos el estado del punto
+    punto.estado = estado;
+    await ruta.save();
+
+    res.json({ ok: true, msg: "Estado del punto actualizado", punto });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al actualizar el estado del punto" });
+  }
+});
+
+// ... (código anterior)
+
+// -------------------- ENDPOINTS --------------------
+
+// Endpoint para el login
+app.post("/login", async (req, res) => {
+  try {
+    const { username, password, placa } = req.body;
+    const user = await User.findOne({ username, password });
+
+    if (!user) return res.status(401).json({ error: "Credenciales inválidas" });
+    if (user.role === "chofer" && !placa) {
+      return res.status(400).json({ error: "Debe indicar la placa asignada" });
+    }
+
+    // Detectar turno según hora actual
+    const hora = new Date().getHours();
+    let turno;
+    if (hora >= 7 && hora < 15) turno = "07:00-15:00";
+    else if (hora >= 15 && hora < 23) turno = "15:00-23:00";
+    else turno = "23:00-07:00";
+
+    // Registrar asignación del chofer a la placa
+    const asignacion = new Asignacion({ choferId: user._id, placa, turno });
+    await asignacion.save();
+
+    res.json({
+      role: user.role,
+      choferId: user._id,
+      turno,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error en el login" });
+  }
+});
+
+// Endpoint para asignar una tarea
+app.post("/tareas", async (req, res) => {
+  try {
+    const { placa, sector, turno } = req.body;
+    const ruta = await Ruta.findOne({ nombre: sector });
+    if (!ruta) {
+      return res.status(404).json({ error: "Ruta no encontrada" });
+    }
+
+    const nuevaTarea = new Tarea({
+      placa,
+      sector,
+      turno,
+      rutaId: ruta._id,
+    });
+    await nuevaTarea.save();
+
+    res.status(201).json({ ok: true, msg: "Tarea asignada con éxito" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al asignar la tarea" });
+  }
+});
+
+// Endpoint para obtener tareas por placa y turno para el chofer
+app.get("/tareas", async (req, res) => {
+  try {
+    const { placa, turno } = req.query;
+    if (!placa || !turno) {
+      return res.status(400).json({ error: "Placa y turno son requeridos" });
+    }
+    const tareas = await Tarea.find({ placa, turno }).populate("rutaId");
+    res.json(tareas);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al obtener las tareas" });
+  }
+});
+
+// Endpoint para obtener los reportes
+app.get("/reportes", async (req, res) => {
+  try {
+    const reportes = await Reporte.find().populate('choferId', 'username').lean();
+    res.json(reportes);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al obtener los reportes" });
+  }
+});
+
+// Endpoint para registrar un reporte
+app.post("/reporte", async (req, res) => {
+  try {
+    const { choferId, placa, novedad, descripcion, ubicacion } = req.body;
+    const nuevoReporte = new Reporte({
+      choferId,
+      placa,
+      novedad,
+      descripcion,
+      ubicacion,
+    });
+    await nuevoReporte.save();
+    res.status(201).json({ ok: true, msg: "Reporte enviado con éxito" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al enviar el reporte" });
+  }
+});
+
+// ... (resto de endpoints)
+
 // -------------------- PUERTO --------------------
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`🚀 Backend corriendo en puerto ${PORT}`));
