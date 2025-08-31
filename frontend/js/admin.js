@@ -29,7 +29,6 @@ document.addEventListener("DOMContentLoaded", () => {
         cargarTareas();
       } else if (targetId === "rutas") {
         inicializarMapa();
-        cargarRutas();
       }
     });
   });
@@ -147,6 +146,7 @@ async function asignarTarea() {
   cargarTareas();
 }
 
+// 💡 FUNCIÓN CORREGIDA
 async function cargarTareas() {
   const tbody = document.querySelector("#tablaTareas tbody");
   try {
@@ -155,12 +155,13 @@ async function cargarTareas() {
         throw new Error(`HTTP error! Status: ${res.status}`);
     }
     const tareas = await res.json();
-    
+    
     tbody.innerHTML = "";
 
     tareas.forEach(t => {
       const tr = document.createElement("tr");
       
+      // Construir la fila principal con el estado general
       tr.innerHTML = `
         <td>${t.placa}</td>
         <td>${t.sector}</td>
@@ -169,20 +170,21 @@ async function cargarTareas() {
       `;
       tbody.appendChild(tr);
 
+      // Agregar la fila detallada con los estados de cada punto
       if (t.estados_detareaxelemntoderuta && t.estados_detareaxelemntoderuta.length > 0) {
         const trDetalle = document.createElement("tr");
-        trDetalle.classList.add("detalle-fila");
         const tdDetalle = document.createElement("td");
         tdDetalle.setAttribute("colspan", "4");
         
-        let puntosHTML = `<ul class="punto-item-lista">`;
+        let puntosHTML = `<div style="padding-left: 20px;"><b>Progreso de Puntos:</b><br><ul>`;
         
         t.estados_detareaxelemntoderuta.forEach(puntoEstado => {
+          // Buscar el nombre del punto usando su ID
           const puntoEnRuta = t.rutaId.puntos.find(p => p._id === puntoEstado.puntoId);
           const nombrePunto = puntoEnRuta ? puntoEnRuta.nombre : 'Desconocido';
-          puntosHTML += `<li><strong>${nombrePunto}:</strong> ${puntoEstado.estado}</li>`;
+          puntosHTML += `<li>${nombrePunto}: **${puntoEstado.estado}**</li>`;
         });
-        puntosHTML += `</ul>`;
+        puntosHTML += `</ul></div>`;
         
         tdDetalle.innerHTML = puntosHTML;
         trDetalle.appendChild(tdDetalle);
@@ -194,7 +196,6 @@ async function cargarTareas() {
     tbody.innerHTML = "<tr><td colspan='4'>Error al cargar las tareas. Revisa la consola para más detalles.</td></tr>";
   }
 }
-
 
 // 🔹 Funciones para la sección de RUTAS
 function inicializarMapa() {
@@ -227,7 +228,7 @@ function inicializarMapa() {
     const marker = L.marker(e.latlng, { draggable: true }).addTo(map);
     marker.bindPopup(`<b>${nombre}</b><br>${direccion}`).openPopup();
     markers.push(marker);
-    
+    
     marker.on('dragend', function(event) {
       const latlng = event.target.getLatLng();
       const index = markers.indexOf(marker);
@@ -280,7 +281,6 @@ async function guardarRuta() {
       markers = [];
       actualizarListaPuntos();
       document.getElementById("nombreRuta").value = "";
-      cargarRutas(); // Vuelve a cargar la tabla de rutas después de guardar
     } else {
       alert("Error al guardar la ruta: " + data.error);
     }
@@ -288,40 +288,4 @@ async function guardarRuta() {
     console.error("Error al guardar la ruta:", err);
     alert("Error de conexión. Intenta de nuevo más tarde.");
   }
-}
-
-async function cargarRutas() {
-    const tbody = document.querySelector("#tablaRutas tbody");
-    try {
-        const res = await fetch(`${API}/rutas`);
-        if (!res.ok) {
-            throw new Error(`HTTP error! Status: ${res.status}`);
-        }
-        const rutas = await res.json();
-
-        tbody.innerHTML = "";
-
-        rutas.forEach(r => {
-            const tr = document.createElement("tr");
-            
-            // Fila principal para la ruta
-            tr.innerHTML = `
-                <td>${r.nombre}</td>
-                <td>
-                    <ul class="punto-item-lista">
-                        ${r.puntos.map(p => `
-                            <li>
-                                <strong>${p.nombre}</strong> (${p.direccion})<br>
-                                Lat: ${p.lat.toFixed(4)}, Lng: ${p.lng.toFixed(4)}
-                            </li>
-                        `).join('')}
-                    </ul>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    } catch (error) {
-        console.error("Error al cargar las rutas:", error);
-        tbody.innerHTML = "<tr><td colspan='2'>Error al cargar las rutas. Revisa la consola para más detalles.</td></tr>";
-    }
 }
