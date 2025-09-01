@@ -3,9 +3,12 @@ const API = "https://urvaseo-backend.onrender.com";
 let map = null;
 let puntos = [];
 let markers = [];
+let userId = localStorage.getItem('anonUserId') || crypto.randomUUID();
+localStorage.setItem('anonUserId', userId);
 
-// Lógica de navegación por pestañas
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+    console.log("ID de usuario anónimo:", userId);
+
     const links = document.querySelectorAll(".navbar a");
     const sections = document.querySelectorAll(".section");
 
@@ -20,7 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
             sections.forEach(s => s.classList.remove("active"));
             document.getElementById(targetId + "-section").classList.add("active");
 
-            // Cargar datos según la sección
             if (targetId === "placas") {
                 cargarPlacas();
             } else if (targetId === "rutas") {
@@ -34,11 +36,25 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Cargar la sección de placas por defecto al iniciar
     cargarPlacas();
+
+    const filtroFechaInput = document.getElementById("filtroFecha");
+    const filtroTurnoSelect = document.getElementById("filtroTurno");
+    const botonReplicar = document.getElementById("btnReplicarTurno");
+    
+    if (filtroFechaInput && filtroTurnoSelect) {
+        filtroFechaInput.addEventListener('change', cargarTareas);
+        filtroTurnoSelect.addEventListener('change', cargarTareas);
+        
+        const hoy = new Date().toISOString().split('T')[0];
+        filtroFechaInput.value = hoy;
+    }
+
+    if (botonReplicar) {
+        botonReplicar.addEventListener('click', replicarTurno);
+    }
 });
 
-// 🔹 Funciones para la sección de PLACAS
 async function cargarPlacas() {
     const res = await fetch(`${API}/placas`);
     const placas = await res.json();
@@ -100,7 +116,6 @@ async function editarPlaca(id, estadoActual) {
     cargarPlacas();
 }
 
-// 🔹 Funciones para la sección de TAREAS
 async function cargarPlacasParaSelect() {
     const res = await fetch(`${API}/placas`);
     const placas = await res.json();
@@ -130,18 +145,20 @@ async function asignarTarea() {
     const placa = document.getElementById("placaSelect").value;
     const sector = document.getElementById("sectorInput").value;
     const turno = document.getElementById("turnoSelect").value;
-    // --- CAMBIO AQUÍ: Capturamos la fecha del nuevo campo de entrada ---
-    const fecha = document.getElementById("fechaInput").value;
+    
+    const fechaStr = document.getElementById("fechaInput").value;
+    const [year, month, day] = fechaStr.split('-').map(Number);
+    const fecha = new Date(Date.UTC(year, month - 1, day)).toISOString();
 
     if (!placa || !sector || !fecha) {
         alert("Placa, sector y fecha son campos obligatorios");
         return;
     }
-
+    
     const res = await fetch(`${API}/tareas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ placa, sector, turno, fecha })
+        body: JSON.stringify({ placa, sector, turno, fecha, userId })
     });
 
     const data = await res.json();
@@ -149,16 +166,32 @@ async function asignarTarea() {
     cargarTareas();
 }
 
-
 async function cargarTareas() {
     const tbody = document.querySelector("#tablaTareas tbody");
     const thead = document.querySelector("#tablaTareas thead");
     try {
+        const filtroFechaStr = document.getElementById("filtroFecha").value;
+        const filtroTurno = document.getElementById("filtroTurno").value;
+
         const res = await fetch(`${API}/tareas`);
         if (!res.ok) {
             throw new Error(`HTTP error! Status: ${res.status}`);
         }
-        const tareas = await res.json();
+        let tareas = await res.json();
+        
+        if (filtroFechaStr) {
+            const [year, month, day] = filtroFechaStr.split('-').map(Number);
+            const dateToFilter = new Date(Date.UTC(year, month - 1, day)).toISOString().split('T')[0];
+            
+            tareas = tareas.filter(t => {
+                const taskDate = new Date(t.fecha).toISOString().split('T')[0];
+                return taskDate === dateToFilter;
+            });
+        }
+
+        if (filtroTurno) {
+            tareas = tareas.filter(t => t.turno === filtroTurno);
+        }
         
         thead.innerHTML = `
             <tr>
@@ -167,13 +200,19 @@ async function cargarTareas() {
                 <th>Turno</th>
                 <th>Fecha</th>
                 <th>Estado</th>
+                <th>Usuario</th>
             </tr>
         `;
         tbody.innerHTML = "";
 
         tareas.forEach(t => {
             const tr = document.createElement("tr");
-            const fecha = new Date(t.fecha).toLocaleDateString('es-ES');
+            
+            const fechaObj = new Date(t.fecha);
+            const year = fechaObj.getUTCFullYear();
+            const month = String(fechaObj.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(fechaObj.getUTCDate()).padStart(2, '0');
+            const fecha = `${day}/${month}/${year}`;
             
             tr.innerHTML = `
                 <td>${t.placa}</td>
@@ -181,38 +220,117 @@ async function cargarTareas() {
                 <td>${t.turno}</td>
                 <td>${fecha}</td>
                 <td>${t.estado}</td>
+                <td>${t.userId || 'N/A'}</td>
             `;
             tbody.appendChild(tr);
-
-            if (t.estados_detareaxelemntoderuta && t.estados_detareaxelemntoderuta.length > 0) {
-                const trDetalle = document.createElement("tr");
-                trDetalle.classList.add("detalle-fila");
-                const tdDetalle = document.createElement("td");
-                tdDetalle.setAttribute("colspan", "5");
-                
-                let puntosHTML = `<ul class="list-unstyled">`;
-                
-                t.estados_detareaxelemntoderuta.forEach(puntoEstado => {
-                    const puntoEnRuta = t.rutaId.puntos.find(p => p._id === puntoEstado.puntoId);
-                    const nombrePunto = puntoEnRuta ? puntoEnRuta.nombre : 'Desconocido';
-                    puntosHTML += `<li><strong>${nombrePunto}:</strong> ${puntoEstado.estado}</li>`;
-                });
-                
-                puntosHTML += `</ul>`;
-                
-                tdDetalle.innerHTML = puntosHTML;
-                trDetalle.appendChild(tdDetalle);
-                tbody.appendChild(trDetalle);
-            }
         });
     } catch (error) {
         console.error("Error al cargar las tareas:", error);
-        tbody.innerHTML = "<tr><td colspan='5'>Error al cargar las tareas. Revisa la consola para más detalles.</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='6'>Error al cargar las tareas. Revisa la consola para más detalles.</td></tr>";
     }
 }
 
+async function replicarTurno() {
+    const filtroFechaStr = document.getElementById("filtroFecha").value;
+    const filtroTurno = document.getElementById("filtroTurno").value;
+    
+    if (!filtroFechaStr || !filtroTurno) {
+        return alert("Por favor, selecciona la fecha y turno de origen para replicar.");
+    }
+    
+    let fechaOrigen, turnoOrigen;
+    let fechaDestino, turnoDestino;
+    const fechaFiltro = new Date(`${filtroFechaStr}T00:00:00Z`);
 
-// 🔹 Funciones para la sección de RUTAS
+    // Determinar fecha y turno de origen y destino
+    if (filtroTurno === "Mañana") {
+        fechaOrigen = new Date(fechaFiltro);
+        fechaOrigen.setUTCDate(fechaOrigen.getUTCDate() - 1); 
+        turnoOrigen = "Noche";
+        fechaDestino = fechaFiltro;
+        turnoDestino = "Mañana";
+    } else if (filtroTurno === "Tarde") {
+        fechaOrigen = fechaFiltro;
+        turnoOrigen = "Mañana";
+        fechaDestino = fechaFiltro;
+        turnoDestino = "Tarde";
+    } else if (filtroTurno === "Noche") {
+        fechaOrigen = fechaFiltro;
+        turnoOrigen = "Tarde";
+        fechaDestino = fechaFiltro;
+        turnoDestino = "Noche";
+    } else {
+        return alert("Selecciona un turno específico para replicar.");
+    }
+    
+    const fechaOrigenStr = fechaOrigen.toISOString().split('T')[0];
+    const fechaDestinoStr = fechaDestino.toISOString().split('T')[0];
+
+    // Paso 1: Verificar si el turno de destino ya tiene tareas
+    try {
+        const urlDestino = `${API}/tareas`;
+        const resDestino = await fetch(urlDestino);
+        const allTareas = await resDestino.json();
+        const tareasDestino = allTareas.filter(t => {
+            const taskDate = new Date(t.fecha).toISOString().split('T')[0];
+            return taskDate === fechaDestinoStr && t.turno === turnoDestino;
+        });
+
+        if (tareasDestino.length > 0) {
+            return alert("No se puede replicar. El turno de destino ya tiene tareas asignadas.");
+        }
+
+    } catch (error) {
+        console.error("Error al verificar tareas en el destino:", error);
+        return alert("Ocurrió un error al verificar el turno de destino. Por favor, intenta de nuevo.");
+    }
+    
+    // Paso 2: Obtener las tareas del turno de origen
+    try {
+        const urlOrigen = `${API}/tareas`;
+        const resOrigen = await fetch(urlOrigen);
+        const allTareas = await resOrigen.json();
+        const tareasOrigen = allTareas.filter(t => {
+            const taskDate = new Date(t.fecha).toISOString().split('T')[0];
+            return taskDate === fechaOrigenStr && t.turno === turnoOrigen;
+        });
+
+        if (tareasOrigen.length === 0) {
+            return alert("No se encontraron tareas en el turno de origen para replicar.");
+        }
+
+        // Paso 3: Replicar las tareas
+        const replicadas = [];
+        for (const tarea of tareasOrigen) {
+            const nuevaTarea = {
+                placa: tarea.placa,
+                sector: tarea.sector,
+                turno: turnoDestino,
+                fecha: fechaDestinoStr,
+                userId: userId 
+            };
+            
+            const resReplica = await fetch(`${API}/tareas`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(nuevaTarea)
+            });
+            const data = await resReplica.json();
+            if (data.ok) {
+                replicadas.push(nuevaTarea);
+            } else {
+                console.error("Error al replicar la tarea:", nuevaTarea, data.error);
+            }
+        }
+        
+        alert(`Se han replicado ${replicadas.length} tareas del turno ${turnoOrigen} (${fechaOrigenStr}) al turno ${turnoDestino} (${fechaDestinoStr}).`);
+        cargarTareas();
+    } catch (error) {
+        console.error("Error al replicar el turno:", error);
+        alert("Ocurrió un error al replicar las tareas. Por favor, intenta de nuevo.");
+    }
+}
+
 function inicializarMapa() {
     if (map) {
         map.remove();
@@ -296,7 +414,7 @@ async function guardarRuta() {
             markers = [];
             actualizarListaPuntos();
             document.getElementById("nombreRuta").value = "";
-            cargarRutas(); // Vuelve a cargar la tabla de rutas después de guardar
+            cargarRutas();
         } else {
             alert("Error al guardar la ruta: " + data.error);
         }
