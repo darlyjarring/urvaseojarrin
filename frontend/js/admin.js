@@ -459,4 +459,3 @@ async function cargarRutas() {
         tbody.innerHTML = "<tr><td colspan='2'>Error al cargar las rutas. Revisa la consola para más detalles.</td></tr>";
     }
 }
-
