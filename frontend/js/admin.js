@@ -169,7 +169,8 @@ async function cargarTareas() {
             `;
             tbody.appendChild(tr);
 
-            if (t.rutaId && t.rutaId.puntos && t.rutaId.puntos.length > 0) {
+            // Se revisa si hay estados de puntos para mostrar antes de crear la fila de detalles
+            if (t.estados_detareaxelemntoderuta && t.estados_detareaxelemntoderuta.length > 0) {
                 const trDetalle = document.createElement("tr");
                 trDetalle.classList.add("detalle-fila");
                 const tdDetalle = document.createElement("td");
@@ -177,13 +178,12 @@ async function cargarTareas() {
                 
                 let puntosHTML = `<ul class="list-unstyled">`;
                 
-                if (t.estados_detareaxelemntoderuta) {
-                  t.estados_detareaxelemntoderuta.forEach(puntoEstado => {
-                      const puntoEnRuta = t.rutaId.puntos.find(p => p._id === puntoEstado.puntoId);
-                      const nombrePunto = puntoEnRuta ? puntoEnRuta.nombre : 'Desconocido';
-                      puntosHTML += `<li><strong>${nombrePunto}:</strong> ${puntoEstado.estado}</li>`;
-                  });
-                }
+                t.estados_detareaxelemntoderuta.forEach(puntoEstado => {
+                    const puntoEnRuta = t.rutaId.puntos.find(p => p._id === puntoEstado.puntoId);
+                    const nombrePunto = puntoEnRuta ? puntoEnRuta.nombre : 'Desconocido';
+                    puntosHTML += `<li><strong>${nombrePunto}:</strong> ${puntoEstado.estado}</li>`;
+                });
+                
                 puntosHTML += `</ul>`;
                 
                 tdDetalle.innerHTML = puntosHTML;
