@@ -54,8 +54,8 @@ mongoose.connect(mongoUri)
 // Endpoint: Verifica el rol del usuario y si es válido
 app.post("/check-role", async (req, res) => {
   try {
-    const { username } = req.body;
-    const user = await User.findOne({ username });
+    const { email } = req.body;
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ error: "Usuario no encontrado" });
     }
@@ -69,8 +69,8 @@ app.post("/check-role", async (req, res) => {
 // Endpoint: Realiza el login final
 app.post("/login", async (req, res) => {
   try {
-    const { username, password, placa } = req.body;
-    const user = await User.findOne({ username, password });
+    const { email, password, placa } = req.body;
+    const user = await User.findOne({ email, password });
     if (!user) return res.status(401).json({ error: "Credenciales inválidas" });
 
     if (user.role === "chofer") {
@@ -84,9 +84,9 @@ app.post("/login", async (req, res) => {
       
       const asignacion = new Asignacion({ choferId: user._id, placa, turno });
       await asignacion.save();
-      res.json({ ok: true, message: "Login exitoso", role: user.role, nombre: user.username, id: user._id, placa, turno });
+      res.json({ ok: true, message: "Login exitoso", role: user.role, nombres: user.nombres, apellidos: user.apellidos, id: user._id, placa, turno });
     } else if (user.role === "supervisor" || user.role === "admin") {
-      res.json({ ok: true, message: "Login exitoso", role: user.role, nombre: user.username, id: user._id });
+      res.json({ ok: true, message: "Login exitoso", role: user.role, nombres: user.nombres, apellidos: user.apellidos, id: user._id });
     } else {
       res.status(400).json({ error: "Rol de usuario desconocido" });
     }
@@ -97,7 +97,6 @@ app.post("/login", async (req, res) => {
 });
 
 // Endpoint: Registrar nuevo usuario
-// Endpoint: Registrar nuevo usuario 
 app.post("/register", async (req, res) => {
   try {
     const { username, password, role, cedula, nombres, apellidos } = req.body;
@@ -123,7 +122,6 @@ app.post("/register", async (req, res) => {
     res.status(500).json({ error: "Error al registrar usuario" });
   }
 });
-
 
 // Endpoint: Asignar una tarea
 app.post("/tareas", async (req, res) => {
