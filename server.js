@@ -115,7 +115,7 @@ app.post("/register", async (req, res) => {
 // Endpoint: Asignar una tarea
 app.post("/tareas", async (req, res) => {
   try {
-    const { placa, sector, turno } = req.body;
+    const { placa, sector, turno, fecha } = req.body;
     const ruta = await Ruta.findOne({ nombre: sector });
     if (!ruta) {
       return res.status(404).json({ error: "Ruta no encontrada" });
@@ -124,6 +124,7 @@ app.post("/tareas", async (req, res) => {
       placa,
       sector,
       turno,
+      fecha,
       rutaId: ruta._id,
     });
     await nuevaTarea.save();
