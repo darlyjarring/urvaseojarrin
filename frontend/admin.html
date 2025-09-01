@@ -14,6 +14,15 @@
     .punto-item { background: #f1f1f1; padding: 5px; border-radius: 5px; margin: 3px 0; }
     .punto-item-lista { list-style: none; padding-left: 0; }
     .detalle-fila { background: #fafafa; }
+    
+    .detalle-fila td {
+  background-color: #f9f9f9 !important;
+  font-size: 0.9em;
+  color: #555;
+}
+.table td, .table th {
+  vertical-align: middle;
+  text-align: center;
   </style>
 </head>
 <body class="bg-light">
@@ -113,9 +122,13 @@
               <option value="Noche">Noche</option>
             </select>
           </div>
-          <div class="col-md-3">
+              <div class="col-md-3">
             <button class="btn btn-success w-100" onclick="asignarTarea()">Asignar</button>
           </div>
+          <div class="col-md-3"> 
+                <input type="date" id="fechaInput" class="form-control" title="Fecha de la tarea">
+           </div>
+      
         </div>
       </div>
 
@@ -125,6 +138,7 @@
             <th>Placa</th>
             <th>Sector</th>
             <th>Turno</th>
+            <th>Fecha</th>
             <th>Estado</th>
           </tr>
         </thead>
@@ -136,6 +150,6 @@
 
   <!-- Scripts -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="js/admin.js"></script>
+  <script src="admin.js"></script>
 </body>
 </html>
