@@ -99,14 +99,14 @@ app.post("/login", async (req, res) => {
 // Endpoint: Registrar nuevo usuario
 app.post("/register", async (req, res) => {
   try {
-    const { username, password, role, cedula, nombres, apellidos } = req.body;
+    const { email, password, role, cedula, nombres, apellidos } = req.body;
 
-    if (!username || !password || !role || !cedula || !nombres || !apellidos) {
+    if (!email || !password || !role || !cedula || !nombres || !apellidos) {
       return res.status(400).json({ error: "Faltan datos" });
     }
 
     const newUser = new User({
-      username,
+      email,
       password,
       role,
       cedula,
@@ -221,8 +221,13 @@ app.post("/reporte", async (req, res) => {
 // Endpoint: Obtener los reportes
 app.get("/reportes", async (req, res) => {
   try {
-    const reportes = await Reporte.find().populate('choferId', 'username').lean();
-    res.json(reportes);
+    // Corregido: Ahora se usan los campos nombres y apellidos para mostrar el nombre del chofer
+    const reportes = await Reporte.find().populate('choferId', 'nombres apellidos').lean();
+    const formattedReports = reportes.map(report => ({
+      ...report,
+      choferName: `${report.choferId.nombres} ${report.choferId.apellidos}`
+    }));
+    res.json(formattedReports);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error al obtener los reportes" });
@@ -233,13 +238,13 @@ app.get("/reportes", async (req, res) => {
 app.get("/supervisor/choferes-activos", async (req, res) => {
   try {
     const choferes = await Asignacion.find({})
-      .populate("choferId", "username")
+      .populate("choferId", "email nombres apellidos")
       .populate("placa", "placa")
       .sort({ fecha: -1 })
       .limit(20);
     const resultado = choferes.map(c => ({
       _id: c.choferId._id,
-      nombre: c.choferId.username,
+      nombre: `${c.choferId.nombres} ${c.choferId.apellidos}`,
       placa: c.placa,
       turno: c.turno
     }));
