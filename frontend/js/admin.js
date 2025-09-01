@@ -1,4 +1,4 @@
-Const API = "https://urvaseo-backend.onrender.com";
+const API = "https://urvaseo-backend.onrender.com";
 
 let map = null;
 let puntos = [];
