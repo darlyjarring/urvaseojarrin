@@ -80,7 +80,10 @@ app.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Credenciales inválidas" });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    // Corregido: Comparar la contraseña en texto plano, ya que la BBDD no la tiene hasheada.
+    // **NOTA DE SEGURIDAD**: Para producción, se recomienda siempre hashear las contraseñas.
+    const isMatch = password === user.password;
+    
     if (!isMatch) {
       return res.status(401).json({ error: "Credenciales inválidas" });
     }
