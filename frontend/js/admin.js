@@ -41,379 +41,135 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const filtroFechaInput = document.getElementById("filtroFecha");
     const filtroTurnoSelect = document.getElementById("filtroTurno");
-    const botonReplicar = document.getElementById("btnReplicarTurno");
-    
-    if (filtroFechaInput && filtroTurnoSelect) {
-        filtroFechaInput.addEventListener('change', cargarTareas);
-        filtroTurnoSelect.addEventListener('change', cargarTareas);
-        
-        const hoy = new Date().toISOString().split('T')[0];
-        filtroFechaInput.value = hoy;
+    const botonReplicar = document.getElementById("btnReplicar");
+    const botonLimpiar = document.getElementById("btnLimpiar");
+    const modal = document.getElementById("modalReplica");
+    const span = document.getElementsByClassName("close")[0];
+
+    botonReplica.onclick = function () {
+        modal.style.display = "block";
+    };
+
+    span.onclick = function () {
+        modal.style.display = "none";
+    };
+
+    window.onclick = function (event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    };
+
+    // Funcionalidad de filtros y botones
+    botonLimpiar.addEventListener("click", () => {
+        filtroFechaInput.value = "";
+        filtroTurnoSelect.value = "Todos";
+        cargarAsignaciones();
+    });
+
+    filtroFechaInput.addEventListener("change", () => cargarAsignaciones());
+    filtroTurnoSelect.addEventListener("change", () => cargarAsignaciones());
+
+    document.getElementById("formReplica").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fechaOriginal = document.getElementById("fechaOriginal").value;
+        const fechaDestino = document.getElementById("fechaDestino").value;
+
+        if (!fechaOriginal || !fechaDestino) {
+            alert("Por favor, selecciona ambas fechas.");
+            return;
+        }
+
+        const asignacionesOriginales = await obtenerAsignacionesPorFecha(fechaOriginal);
+        if (asignacionesOriginales.length === 0) {
+            alert("No hay asignaciones para la fecha original.");
+            return;
+        }
+
+        await replicarAsignaciones(asignacionesOriginales, fechaDestino);
+        modal.style.display = "none";
+    });
+
+    async function obtenerAsignacionesPorFecha(fecha) {
+        try {
+            const res = await fetch(`${API}/asignaciones?fecha=${fecha}`);
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            return res.json();
+        } catch (error) {
+            console.error("Error al obtener asignaciones por fecha:", error);
+            return [];
+        }
     }
 
-    if (botonReplicar) {
-        botonReplicar.addEventListener('click', replicarTurno);
+    async function replicarAsignaciones(asignaciones, fechaDestino) {
+        for (const asignacion of asignaciones) {
+            const nuevaAsignacion = {
+                chofer: asignacion.chofer,
+                placa: asignacion.placa,
+                ruta: asignacion.ruta,
+                fecha: fechaDestino,
+                estado: "Pendiente"
+            };
+            try {
+                await fetch(`${API}/asignaciones`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(nuevaAsignacion),
+                });
+            } catch (error) {
+                console.error("Error al replicar la asignación:", error);
+            }
+        }
+        alert("Asignaciones replicadas con éxito.");
+        cargarAsignaciones();
     }
 });
 
+// Sección de Placas
 async function cargarPlacas() {
-    const res = await fetch(`${API}/placas`);
-    const placas = await res.json();
-    const tablaPlacasBody = document.querySelector("#tablaPlacas tbody");
-    tablaPlacasBody.innerHTML = "";
-
-    placas.forEach((p, i) => {
-        const tr = document.createElement("tr");
-        const estadoTexto = p.activo ? "Activa" : "Inactiva";
-        const estadoClase = p.activo ? "status-active" : "status-inactive";
-        tr.innerHTML = `
-            <td>${i + 1}</td>
-            <td>${p.placa}</td>
-            <td class="${estadoClase}">${estadoTexto}</td>
-            <td><button class="btn btn-sm btn-info" onclick="editarPlaca('${p._id}', ${p.activo})">Editar</button></td>
-        `;
-        tablaPlacasBody.appendChild(tr);
-    });
-}
-
-async function registrarPlaca() {
-    const placa = document.getElementById("nuevaPlaca").value.trim();
-    const activo = document.getElementById("estadoPlaca").value === "true";
-
-    if (!placa) {
-        alert("Debe ingresar una placa");
-        return;
-    }
-
-    const res = await fetch(`${API}/placas`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ placa, activo })
-    });
-
-    if (res.ok) {
-        document.getElementById("nuevaPlaca").value = "";
-        cargarPlacas();
-    } else {
-        alert("Error al registrar la placa.");
-    }
-}
-
-async function editarPlaca(id, estadoActual) {
-    const nuevoEstadoPrompt = prompt("Ingrese el nuevo estado (activo/inactivo):", estadoActual ? "activo" : "inactivo");
-    if (!nuevoEstadoPrompt) return;
-    const nuevoEstadoLower = nuevoEstadoPrompt.toLowerCase();
-    if (nuevoEstadoLower !== "activo" && nuevoEstadoLower !== "inactivo") {
-        alert("Estado inválido. Por favor use 'activo' o 'inactivo'.");
-        return;
-    }
-
-    const activo = nuevoEstadoLower === "activo";
-    await fetch(`${API}/placas/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ activo })
-    });
-    cargarPlacas();
-}
-
-async function cargarPlacasParaSelect() {
-    const res = await fetch(`${API}/placas`);
-    const placas = await res.json();
-    const placaSelect = document.getElementById("placaSelect");
-    placaSelect.innerHTML = "";
-    placas.forEach(p => {
-        const option = document.createElement("option");
-        option.value = p.placa;
-        option.text = p.placa;
-        placaSelect.add(option);
-    });
-}
-
-async function cargarRutasParaDatalist() {
-    const res = await fetch(`${API}/rutas`);
-    const rutas = await res.json();
-    const rutaList = document.getElementById("rutaList");
-    rutaList.innerHTML = "";
-    rutas.forEach(r => {
-        const option = document.createElement("option");
-        option.value = r.nombre;
-        rutaList.appendChild(option);
-    });
-}
-
-async function asignarTarea() {
-    const placa = document.getElementById("placaSelect").value;
-    const sector = document.getElementById("sectorInput").value;
-    const turno = document.getElementById("turnoSelect").value;
-    
-    const fechaStr = document.getElementById("fechaInput").value;
-    const [year, month, day] = fechaStr.split('-').map(Number);
-    const fecha = new Date(Date.UTC(year, month - 1, day)).toISOString();
-
-    if (!placa || !sector || !fecha) {
-        alert("Placa, sector y fecha son campos obligatorios");
-        return;
-    }
-    
-    const res = await fetch(`${API}/tareas`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ placa, sector, turno, fecha, userId })
-    });
-
-    const data = await res.json();
-    if (data.ok) alert("Tarea asignada ✅");
-    cargarTareas();
-}
-
-async function cargarTareas() {
-    const tbody = document.querySelector("#tablaTareas tbody");
-    const thead = document.querySelector("#tablaTareas thead");
+    const tbody = document.querySelector("#tablaPlacas tbody");
     try {
-        const filtroFechaStr = document.getElementById("filtroFecha").value;
-        const filtroTurno = document.getElementById("filtroTurno").value;
+        const res = await fetch(`${API}/placas`);
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        const placas = await res.json();
 
-        const res = await fetch(`${API}/tareas`);
-        if (!res.ok) {
-            throw new Error(`HTTP error! Status: ${res.status}`);
-        }
-        let tareas = await res.json();
-        
-        if (filtroFechaStr) {
-            const [year, month, day] = filtroFechaStr.split('-').map(Number);
-            const dateToFilter = new Date(Date.UTC(year, month - 1, day)).toISOString().split('T')[0];
-            
-            tareas = tareas.filter(t => {
-                const taskDate = new Date(t.fecha).toISOString().split('T')[0];
-                return taskDate === dateToFilter;
-            });
-        }
-
-        if (filtroTurno) {
-            tareas = tareas.filter(t => t.turno === filtroTurno);
-        }
-        
-        thead.innerHTML = `
-            <tr>
-                <th>Placa</th>
-                <th>Sector</th>
-                <th>Turno</th>
-                <th>Fecha</th>
-                <th>Estado</th>
-                <th>Usuario</th>
-            </tr>
-        `;
         tbody.innerHTML = "";
 
-        tareas.forEach(t => {
+        placas.forEach(p => {
             const tr = document.createElement("tr");
-            
-            const fechaObj = new Date(t.fecha);
-            const year = fechaObj.getUTCFullYear();
-            const month = String(fechaObj.getUTCMonth() + 1).padStart(2, '0');
-            const day = String(fechaObj.getUTCDate()).padStart(2, '0');
-            const fecha = `${day}/${month}/${year}`;
-            
             tr.innerHTML = `
-                <td>${t.placa}</td>
-                <td>${t.sector}</td>
-                <td>${t.turno}</td>
-                <td>${fecha}</td>
-                <td>${t.estado}</td>
-                <td>${t.userId || 'N/A'}</td>
+                <td>${p.placa}</td>
+                <td>${p.activo ? "Sí" : "No"}</td>
             `;
             tbody.appendChild(tr);
         });
     } catch (error) {
-        console.error("Error al cargar las tareas:", error);
-        tbody.innerHTML = "<tr><td colspan='6'>Error al cargar las tareas. Revisa la consola para más detalles.</td></tr>";
+        console.error("Error al cargar las placas:", error);
+        tbody.innerHTML = "<tr><td colspan='2'>Error al cargar las placas. Revisa la consola para más detalles.</td></tr>";
     }
 }
 
-async function replicarTurno() {
-    const filtroFechaStr = document.getElementById("filtroFecha").value;
-    const filtroTurno = document.getElementById("filtroTurno").value;
-    
-    if (!filtroFechaStr || !filtroTurno) {
-        return alert("Por favor, selecciona la fecha y turno de origen para replicar.");
-    }
-    
-    let fechaOrigen, turnoOrigen;
-    let fechaDestino, turnoDestino;
-    const fechaFiltro = new Date(`${filtroFechaStr}T00:00:00Z`);
-
-    // Determinar fecha y turno de origen y destino
-    if (filtroTurno === "Mañana") {
-        fechaOrigen = new Date(fechaFiltro);
-        fechaOrigen.setUTCDate(fechaOrigen.getUTCDate() - 1); 
-        turnoOrigen = "Noche";
-        fechaDestino = fechaFiltro;
-        turnoDestino = "Mañana";
-    } else if (filtroTurno === "Tarde") {
-        fechaOrigen = fechaFiltro;
-        turnoOrigen = "Mañana";
-        fechaDestino = fechaFiltro;
-        turnoDestino = "Tarde";
-    } else if (filtroTurno === "Noche") {
-        fechaOrigen = fechaFiltro;
-        turnoOrigen = "Tarde";
-        fechaDestino = fechaFiltro;
-        turnoDestino = "Noche";
-    } else {
-        return alert("Selecciona un turno específico para replicar.");
-    }
-    
-    const fechaOrigenStr = fechaOrigen.toISOString().split('T')[0];
-    const fechaDestinoStr = fechaDestino.toISOString().split('T')[0];
-
-    // Paso 1: Verificar si el turno de destino ya tiene tareas
-    try {
-        const urlDestino = `${API}/tareas`;
-        const resDestino = await fetch(urlDestino);
-        const allTareas = await resDestino.json();
-        const tareasDestino = allTareas.filter(t => {
-            const taskDate = new Date(t.fecha).toISOString().split('T')[0];
-            return taskDate === fechaDestinoStr && t.turno === turnoDestino;
-        });
-
-        if (tareasDestino.length > 0) {
-            return alert("No se puede replicar. El turno de destino ya tiene tareas asignadas.");
-        }
-
-    } catch (error) {
-        console.error("Error al verificar tareas en el destino:", error);
-        return alert("Ocurrió un error al verificar el turno de destino. Por favor, intenta de nuevo.");
-    }
-    
-    // Paso 2: Obtener las tareas del turno de origen
-    try {
-        const urlOrigen = `${API}/tareas`;
-        const resOrigen = await fetch(urlOrigen);
-        const allTareas = await resOrigen.json();
-        const tareasOrigen = allTareas.filter(t => {
-            const taskDate = new Date(t.fecha).toISOString().split('T')[0];
-            return taskDate === fechaOrigenStr && t.turno === turnoOrigen;
-        });
-
-        if (tareasOrigen.length === 0) {
-            return alert("No se encontraron tareas en el turno de origen para replicar.");
-        }
-
-        // Paso 3: Replicar las tareas
-        const replicadas = [];
-        for (const tarea of tareasOrigen) {
-            const nuevaTarea = {
-                placa: tarea.placa,
-                sector: tarea.sector,
-                turno: turnoDestino,
-                fecha: fechaDestinoStr,
-                userId: userId 
-            };
-            
-            const resReplica = await fetch(`${API}/tareas`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(nuevaTarea)
-            });
-            const data = await resReplica.json();
-            if (data.ok) {
-                replicadas.push(nuevaTarea);
-            } else {
-                console.error("Error al replicar la tarea:", nuevaTarea, data.error);
-            }
-        }
-        
-        alert(`Se han replicado ${replicadas.length} tareas del turno ${turnoOrigen} (${fechaOrigenStr}) al turno ${turnoDestino} (${fechaDestinoStr}).`);
-        cargarTareas();
-    } catch (error) {
-        console.error("Error al replicar el turno:", error);
-        alert("Ocurrió un error al replicar las tareas. Por favor, intenta de nuevo.");
-    }
-}
-
-function inicializarMapa() {
-    if (map) {
-        map.remove();
-    }
-    map = L.map('map').setView([-2.2, -79.9], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-    puntos = [];
-    markers.forEach(m => map.removeLayer(m));
-    markers = [];
-    actualizarListaPuntos();
-
-    map.on('click', function(e) {
-        const nombre = prompt("Nombre del punto (Ej: Recolector 1)");
-        if (!nombre) return;
-
-        const direccion = prompt("Dirección del punto:");
-        if (!direccion) return;
-
-        const nuevoPunto = {
-            nombre: nombre,
-            direccion: direccion,
-            lat: e.latlng.lat,
-            lng: e.latlng.lng,
-        };
-        puntos.push(nuevoPunto);
-
-        const marker = L.marker(e.latlng, { draggable: true }).addTo(map);
-        marker.bindPopup(`<b>${nombre}</b><br>${direccion}`).openPopup();
-        markers.push(marker);
-        
-        marker.on('dragend', function(event) {
-            const latlng = event.target.getLatLng();
-            const index = markers.indexOf(marker);
-            if (index !== -1) {
-                puntos[index].lat = latlng.lat;
-                puntos[index].lng = latlng.lng;
-            }
-        });
-        actualizarListaPuntos();
-    });
-}
-
-function actualizarListaPuntos() {
-    const container = document.getElementById("puntosContainer");
-    container.innerHTML = "";
-    puntos.forEach((p, i) => {
-        const div = document.createElement("div");
-        div.classList.add("punto-item");
-        div.innerHTML = `
-            <span>${p.nombre} - ${p.direccion}</span>
-        `;
-        container.appendChild(div);
-    });
-}
-
+// Sección de Rutas
 async function guardarRuta() {
-    const nombreRuta = document.getElementById("nombreRuta").value.trim();
-    if (!nombreRuta) {
-        return alert("Debe ingresar un nombre para la ruta.");
+    const nombreRuta = document.getElementById("nombreRuta").value;
+    if (nombreRuta.trim() === "") {
+        alert("El nombre de la ruta es obligatorio.");
+        return;
     }
-
     if (puntos.length === 0) {
-        return alert("Debe agregar al menos un punto a la ruta.");
+        alert("Debe agregar al menos un punto a la ruta.");
+        return;
     }
 
     try {
         const res = await fetch(`${API}/rutas`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                nombre: nombreRuta,
-                puntos: puntos,
-            }),
+            body: JSON.stringify({ nombre: nombreRuta, puntos }),
         });
         const data = await res.json();
         if (data.ok) {
-            alert("Ruta guardada con éxito ✅");
-            puntos = [];
-            markers.forEach(m => map.removeLayer(m));
-            markers = [];
-            actualizarListaPuntos();
+            alert("Ruta guardada con éxito.");
             document.getElementById("nombreRuta").value = "";
             cargarRutas();
         } else {
@@ -458,4 +214,226 @@ async function cargarRutas() {
         console.error("Error al cargar las rutas:", error);
         tbody.innerHTML = "<tr><td colspan='2'>Error al cargar las rutas. Revisa la consola para más detalles.</td></tr>";
     }
+}
+
+// Sección de Tareas
+async function cargarPlacasParaSelect() {
+    const select = document.getElementById("placaSelect");
+    try {
+        const res = await fetch(`${API}/placas`);
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        const placas = await res.json();
+        select.innerHTML = "<option value=''>Selecciona una placa</option>";
+        placas.forEach(p => {
+            if (p.activo) {
+                const option = document.createElement("option");
+                option.value = p._id;
+                option.innerText = p.placa;
+                select.appendChild(option);
+            }
+        });
+    } catch (error) {
+        console.error("Error al cargar las placas:", error);
+    }
+}
+
+async function cargarRutasParaDatalist() {
+    const datalist = document.getElementById("rutasDatalist");
+    try {
+        const res = await fetch(`${API}/rutas`);
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        const rutas = await res.json();
+        datalist.innerHTML = "";
+        rutas.forEach(r => {
+            const option = document.createElement("option");
+            option.value = r.nombre;
+            option.dataset.rutaId = r._id;
+            datalist.appendChild(option);
+        });
+    } catch (error) {
+        console.error("Error al cargar las rutas para datalist:", error);
+    }
+}
+
+async function asignarTarea() {
+    const chofer = document.getElementById("choferSelect").value;
+    const placa = document.getElementById("placaSelect").value;
+    const rutaNombre = document.getElementById("rutaInput").value;
+    const fecha = document.getElementById("fechaInput").value;
+    const estado = document.getElementById("estadoSelect").value;
+    
+    // Validación de campos
+    if (!chofer || !placa || !rutaNombre || !fecha) {
+        alert("Todos los campos son obligatorios. Por favor, completa el formulario.");
+        return;
+    }
+
+    // Obtener el _id de la ruta a partir de su nombre
+    const rutasDatalist = document.getElementById("rutasDatalist").options;
+    let rutaId = null;
+    for (let i = 0; i < rutasDatalist.length; i++) {
+        if (rutasDatalist[i].value === rutaNombre) {
+            rutaId = rutasDatalist[i].dataset.rutaId;
+            break;
+        }
+    }
+
+    if (!rutaId) {
+        alert("La ruta seleccionada no es válida.");
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API}/asignaciones`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                chofer,
+                placa,
+                ruta: rutaId,
+                fecha,
+                estado
+            }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+            alert("Asignación de tarea exitosa.");
+            cargarAsignaciones();
+            document.getElementById("formAsignarTarea").reset();
+        } else {
+            alert("Error al asignar la tarea: " + data.error);
+        }
+    } catch (err) {
+        console.error("Error al asignar la tarea:", err);
+        alert("Error de conexión. Intenta de nuevo más tarde.");
+    }
+}
+
+async function cargarAsignaciones() {
+    const tbody = document.querySelector("#tablaAsignaciones tbody");
+    const filtroFecha = document.getElementById("filtroFecha").value;
+    const filtroTurno = document.getElementById("filtroTurno").value;
+
+    try {
+        const res = await fetch(`${API}/asignaciones`);
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        let asignaciones = await res.json();
+
+        // Filtrado en el cliente (mejorar en el backend con parámetros de query)
+        if (filtroFecha) {
+            asignaciones = asignaciones.filter(a => {
+                const fechaAsignacion = new Date(a.fecha).toISOString().split('T')[0];
+                return fechaAsignacion === filtroFecha;
+            });
+        }
+        if (filtroTurno !== "Todos") {
+            asignaciones = asignaciones.filter(a => a.turno === filtroTurno);
+        }
+
+        const promesasDetalles = asignaciones.map(async (a) => {
+            const [choferRes, placaRes, rutaRes] = await Promise.all([
+                fetch(`${API}/users/${a.chofer}`),
+                fetch(`${API}/placas/${a.placa}`),
+                fetch(`${API}/rutas/${a.ruta}`),
+            ]);
+
+            const chofer = await choferRes.json();
+            const placa = await placaRes.json();
+            const ruta = await rutaRes.json();
+            
+            return {
+                ...a,
+                choferNombre: chofer.nombres,
+                placaNombre: placa.placa,
+                rutaNombre: ruta.nombre,
+            };
+        });
+
+        const asignacionesConDetalles = await Promise.all(promesasDetalles);
+        tbody.innerHTML = "";
+
+        asignacionesConDetalles.forEach(a => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${a.choferNombre}</td>
+                <td>${a.placaNombre}</td>
+                <td>${a.rutaNombre}</td>
+                <td>${new Date(a.fecha).toISOString().split('T')[0]}</td>
+                <td>${a.estado}</td>
+                <td>
+                    <button class="btn btn-warning btn-sm" onclick="editarAsignacion('${a._id}')">Editar</button>
+                    <button class="btn btn-danger btn-sm" onclick="eliminarAsignacion('${a._id}')">Eliminar</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error("Error al cargar las asignaciones:", error);
+        tbody.innerHTML = "<tr><td colspan='6'>Error al cargar las asignaciones. Revisa la consola para más detalles.</td></tr>";
+    }
+}
+
+// Funciones de eliminación, edición y actualización
+async function eliminarAsignacion(id) {
+    if (confirm("¿Estás seguro de que deseas eliminar esta asignación?")) {
+        try {
+            const res = await fetch(`${API}/asignaciones/${id}`, {
+                method: "DELETE",
+            });
+            if (res.ok) {
+                alert("Asignación eliminada con éxito.");
+                cargarAsignaciones();
+            } else {
+                alert("Error al eliminar la asignación.");
+            }
+        } catch (error) {
+            console.error("Error al eliminar la asignación:", error);
+            alert("Error de conexión. Intenta de nuevo más tarde.");
+        }
+    }
+}
+
+// Mapa y Puntos de ruta
+function inicializarMapa() {
+    if (map) return; // Evita inicializar el mapa múltiples veces
+    map = L.map('map').setView([-2.1468, -79.9678], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    map.on('click', onMapClick);
+}
+
+function onMapClick(e) {
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
+    const nombre = prompt("Ingresa un nombre para este punto:");
+    if (nombre) {
+        const punto = { lat, lng, nombre, estado: "Pendiente" };
+        puntos.push(punto);
+        const marker = L.marker([lat, lng]).addTo(map).bindPopup(nombre);
+        markers.push(marker);
+        actualizarPuntosLista();
+    }
+}
+
+function actualizarPuntosLista() {
+    const ul = document.getElementById("puntosLista");
+    ul.innerHTML = "";
+    puntos.forEach((p, index) => {
+        const li = document.createElement("li");
+        li.className = "list-group-item d-flex justify-content-between align-items-center";
+        li.innerHTML = `
+            <span>${p.nombre} (Lat: ${p.lat.toFixed(4)}, Lng: ${p.lng.toFixed(4)})</span>
+            <button class="btn btn-danger btn-sm" onclick="eliminarPunto(${index})">Eliminar</button>
+        `;
+        ul.appendChild(li);
+    });
+}
+
+function eliminarPunto(index) {
+    map.removeLayer(markers[index]);
+    puntos.splice(index, 1);
+    markers.splice(index, 1);
+    actualizarPuntosLista();
 }
