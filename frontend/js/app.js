@@ -3,14 +3,14 @@ let placaSeleccionada = null;
 
 // Evento que se dispara al hacer clic/tocar o presionar tab en el campo de contraseña
 document.getElementById("password").addEventListener("focus", async () => {
-  const username = document.getElementById("username").value;
-  if (username.trim() === "") return;
+  const email = document.getElementById("email").value;
+  if (email.trim() === "") return;
 
   try {
     const res = await fetch(`${API}/check-role`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username })
+      body: JSON.stringify({ email })
     });
 
     if (res.ok) {
@@ -58,18 +58,18 @@ async function cargarPlacasActivas() {
 
 // Lógica de login
 async function login() {
-  const username = document.getElementById("username").value;
+  const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
   const placa = placaSeleccionada;
 
-  if (username.trim() === "" || password.trim() === "") {
+  if (email.trim() === "" || password.trim() === "") {
     return alert("Todos los campos son obligatorios.");
   }
   
   const res = await fetch(`${API}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password, placa })
+    body: JSON.stringify({ email, password, placa })
   });
 
   const data = await res.json();
@@ -77,16 +77,17 @@ async function login() {
   if (data.ok) {
     if (data.role === "chofer") {
       localStorage.setItem("userId", data.id);
-      localStorage.setItem("chofer", data.nombre);
+      localStorage.setItem("chofer", data.nombres + " " + data.apellidos);
       localStorage.setItem("placa", data.placa);
       localStorage.setItem("turno", data.turno);
       window.location = "chofer.html";
     } else if (data.role === "supervisor") {
       localStorage.setItem("userId", data.id);
+      localStorage.setItem("supervisorName", data.nombres + " " + data.apellidos);
       window.location = "supervisor.html";
     } else if (data.role === "admin") {
       localStorage.setItem("userId", data.id);
-      localStorage.setItem("adminName", data.nombre); // Guarda el nombre del admin
+      localStorage.setItem("adminName", data.nombres + " " + data.apellidos);
       window.location = "admin.html";
     }
   } else {
