@@ -17,7 +17,7 @@
       padding: 30px;
       border-radius: 10px;
       box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
-      width: 300px;
+      width: 320px;
       text-align: center;
     }
     input, select, button {
@@ -47,6 +47,9 @@
   <div class="register-box">
     <h2>Registrar Usuario</h2>
     <form id="registerForm">
+      <input type="text" id="cedula" placeholder="Cédula" required />
+      <input type="text" id="nombres" placeholder="Nombres" required />
+      <input type="text" id="apellidos" placeholder="Apellidos" required />
       <input type="email" id="username" placeholder="Correo electrónico" required />
       <input type="password" id="password" placeholder="Contraseña" required />
       <select id="role" required>
@@ -63,6 +66,9 @@
   <script>
     document.getElementById("registerForm").addEventListener("submit", async (e) => {
       e.preventDefault();
+      const cedula = document.getElementById("cedula").value;
+      const nombres = document.getElementById("nombres").value;
+      const apellidos = document.getElementById("apellidos").value;
       const username = document.getElementById("username").value;
       const password = document.getElementById("password").value;
       const role = document.getElementById("role").value;
@@ -71,7 +77,7 @@
         const res = await fetch("https://urvaseo-backend.onrender.com/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password, role })
+          body: JSON.stringify({ cedula, nombres, apellidos, username, password, role })
         });
         const data = await res.json();
         if (res.ok) {
