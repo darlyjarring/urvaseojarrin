@@ -97,20 +97,33 @@ app.post("/login", async (req, res) => {
 });
 
 // Endpoint: Registrar nuevo usuario
+// Endpoint: Registrar nuevo usuario 
 app.post("/register", async (req, res) => {
   try {
-    const { username, password, role } = req.body;
-    if (!username || !password || !role) {
+    const { username, password, role, cedula, nombres, apellidos } = req.body;
+
+    if (!username || !password || !role || !cedula || !nombres || !apellidos) {
       return res.status(400).json({ error: "Faltan datos" });
     }
-    const newUser = new User({ username, password, role });
+
+    const newUser = new User({
+      username,
+      password,
+      role,
+      cedula,
+      nombres,
+      apellidos
+    });
+
     await newUser.save();
+
     res.json({ ok: true, msg: "Usuario registrado con éxito" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error al registrar usuario" });
   }
 });
+
 
 // Endpoint: Asignar una tarea
 app.post("/tareas", async (req, res) => {
