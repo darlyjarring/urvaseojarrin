@@ -9,7 +9,7 @@ localStorage.setItem('anonUserId', userId);
 document.addEventListener("DOMContentLoaded", async () => {
     console.log("ID de usuario anónimo:", userId);
 
-    const links = document.querySelectorAll(".navbar a");
+    const links = document.querySelectorAll(".header-links a");
     const sections = document.querySelectorAll(".section");
 
     links.forEach(link => {
@@ -36,6 +36,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     });
 
+    // Cargar la sección inicial
     cargarPlacas();
 
     const filtroFechaInput = document.getElementById("filtroFecha");
@@ -458,3 +459,4 @@ async function cargarRutas() {
         tbody.innerHTML = "<tr><td colspan='2'>Error al cargar las rutas. Revisa la consola para más detalles.</td></tr>";
     }
 }
+
