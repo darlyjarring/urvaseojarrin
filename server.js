@@ -51,7 +51,7 @@ mongoose.connect(mongoUri)
 
 // -------------------- ENDPOINTS --------------------
 
-// Endpoint 1: Verifica el rol del usuario y si es válido
+// Endpoint: Verifica el rol del usuario y si es válido
 app.post("/check-role", async (req, res) => {
   try {
     const { username } = req.body;
@@ -66,7 +66,7 @@ app.post("/check-role", async (req, res) => {
   }
 });
 
-// Endpoint 2: Realiza el login final
+// Endpoint: Realiza el login final
 app.post("/login", async (req, res) => {
   try {
     const { username, password, placa } = req.body;
@@ -96,7 +96,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// Registrar nuevo usuario
+// Endpoint: Registrar nuevo usuario
 app.post("/register", async (req, res) => {
   try {
     const { username, password, role } = req.body;
@@ -112,7 +112,7 @@ app.post("/register", async (req, res) => {
   }
 });
 
-// Endpoint para asignar una tarea
+// Endpoint: Asignar una tarea
 app.post("/tareas", async (req, res) => {
   try {
     const { placa, sector, turno } = req.body;
@@ -120,22 +120,13 @@ app.post("/tareas", async (req, res) => {
     if (!ruta) {
       return res.status(404).json({ error: "Ruta no encontrada" });
     }
-
-    // Inicializa el nuevo campo con el estado 'pendiente' para cada punto de la ruta
-    const estadosIniciales = ruta.puntos.map(punto => ({
-      puntoId: punto._id,
-      estado: "pendiente"
-    }));
-
     const nuevaTarea = new Tarea({
       placa,
       sector,
       turno,
       rutaId: ruta._id,
-      estados_detareaxelemntoderuta: estadosIniciales,
     });
     await nuevaTarea.save();
-
     res.status(201).json({ ok: true, msg: "Tarea asignada con éxito" });
   } catch (err) {
     console.error(err);
@@ -143,20 +134,16 @@ app.post("/tareas", async (req, res) => {
   }
 });
 
-// Endpoint para obtener tareas. Ahora funciona para choferes y para el panel de administración
+// Endpoint: Obtener tareas (para chofer o admin)
 app.get("/tareas", async (req, res) => {
   try {
     const { placa, turno } = req.query;
-    let tareas;
-
-    // Si recibimos 'placa' y 'turno', filtramos las tareas para el chofer
-    if (placa && turno) {
-      tareas = await Tarea.find({ placa, turno }).populate("rutaId");
-    } else {
-      // Si no, devolvemos todas las tareas para el administrador
-      tareas = await Tarea.find({}).populate("rutaId");
-    }
+    let query = {};
+    if (placa) query.placa = placa;
+    if (turno) query.turno = turno;
     
+    // Si no se especifica placa ni turno, se devuelven todas las tareas
+    const tareas = await Tarea.find(query).populate("rutaId");
     res.json(tareas);
   } catch (err) {
     console.error(err);
@@ -164,7 +151,7 @@ app.get("/tareas", async (req, res) => {
   }
 });
 
-// Registrar y listar placas
+// Endpoint: Registrar y listar placas
 app.post("/placas", async (req, res) => {
   try {
     const { placa, activo } = req.body;
@@ -199,18 +186,7 @@ app.put("/placas/:id", async (req, res) => {
   }
 });
 
-// Endpoint para obtener los reportes
-app.get("/reportes", async (req, res) => {
-  try {
-    const reportes = await Reporte.find().populate('choferId', 'username').lean();
-    res.json(reportes);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Error al obtener los reportes" });
-  }
-});
-
-// Endpoint para registrar un reporte
+// Endpoint: Registrar un reporte
 app.post("/reporte", async (req, res) => {
   try {
     const { choferId, placa, novedad, descripcion, ubicacion } = req.body;
@@ -229,14 +205,62 @@ app.post("/reporte", async (req, res) => {
   }
 });
 
+// Endpoint: Obtener los reportes
+app.get("/reportes", async (req, res) => {
+  try {
+    const reportes = await Reporte.find().populate('choferId', 'username').lean();
+    res.json(reportes);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al obtener los reportes" });
+  }
+});
+
+// Endpoints para el supervisor
+app.get("/supervisor/choferes-activos", async (req, res) => {
+  try {
+    const choferes = await Asignacion.find({})
+      .populate("choferId", "username")
+      .populate("placa", "placa")
+      .sort({ fecha: -1 })
+      .limit(20);
+    const resultado = choferes.map(c => ({
+      _id: c.choferId._id,
+      nombre: c.choferId.username,
+      placa: c.placa,
+      turno: c.turno
+    }));
+    res.json(resultado);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error obteniendo choferes activos" });
+  }
+});
+
+app.get("/supervisor/tareas/:choferId", async (req, res) => {
+  try {
+    const { choferId } = req.params;
+    const asignacion = await Asignacion.findOne({ choferId }).sort({ fecha: -1 });
+    if (!asignacion) {
+      return res.status(404).json({ error: "No se encontró una asignación para este chofer" });
+    }
+    const { placa, turno } = asignacion;
+    const tareas = await Tarea.find({ placa, turno });
+    res.json(tareas);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error obteniendo las tareas del chofer" });
+  }
+});
+
 // Endpoints para gestión de rutas
 app.post("/rutas", async (req, res) => {
   try {
-    const { nombre, puntos, supervisorId, choferId } = req.body;
+    const { nombre, puntos } = req.body;
     if (!nombre || !puntos || puntos.length === 0) {
       return res.status(400).json({ error: "Nombre y al menos un punto son requeridos" });
     }
-    const nuevaRuta = new Ruta({ nombre, puntos, supervisorId, choferId });
+    const nuevaRuta = new Ruta({ nombre, puntos });
     await nuevaRuta.save();
     res.json({ ok: true, msg: "Ruta registrada con éxito" });
   } catch (err) {
@@ -255,32 +279,35 @@ app.get("/rutas", async (req, res) => {
   }
 });
 
-// Nuevo endpoint para actualizar el estado de un punto en la tarea
+app.put("/rutas/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { completada } = req.body;
+    const rutaActualizada = await Ruta.findByIdAndUpdate(id, { completada }, { new: true });
+    if (!rutaActualizada) return res.status(404).json({ error: "Ruta no encontrada" });
+    res.json({ ok: true, msg: "Ruta actualizada", ruta: rutaActualizada });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error actualizando la ruta" });
+  }
+});
+
+// Nuevo endpoint para actualizar el estado de un punto
 app.put("/rutas/:rutaId/puntos/:puntoId", async (req, res) => {
   try {
     const { rutaId, puntoId } = req.params;
     const { estado } = req.body;
-
-    // Buscamos la tarea que corresponde a esta ruta
-    const tarea = await Tarea.findOne({ rutaId });
-    if (!tarea) {
-      return res.status(404).json({ error: "Tarea no encontrada para esta ruta" });
+    const ruta = await Ruta.findById(rutaId);
+    if (!ruta) {
+      return res.status(404).json({ error: "Ruta no encontrada" });
     }
-
-    // Encontrar el punto dentro del nuevo array 'estados_detareaxelemntoderuta'
-    const puntoEnTarea = tarea.estados_detareaxelemntoderuta.find(
-      (p) => p.puntoId.toString() === puntoId
-    );
-
-    if (!puntoEnTarea) {
-      return res.status(404).json({ error: "Punto de tarea no encontrado" });
+    const punto = ruta.puntos.id(puntoId);
+    if (!punto) {
+      return res.status(404).json({ error: "Punto no encontrado" });
     }
-
-    // Actualizamos el estado del punto de la tarea
-    puntoEnTarea.estado = estado;
-    await tarea.save();
-
-    res.json({ ok: true, msg: "Estado del punto de la tarea actualizado", puntoEnTarea });
+    punto.estado = estado;
+    await ruta.save();
+    res.json({ ok: true, msg: "Estado del punto actualizado", punto });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error al actualizar el estado del punto" });
