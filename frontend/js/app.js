@@ -76,14 +76,17 @@ async function login() {
 
   if (data.ok) {
     if (data.role === "chofer") {
-      localStorage.setItem("choferId", data.id);
+      localStorage.setItem("userId", data.id);
       localStorage.setItem("chofer", data.nombre);
       localStorage.setItem("placa", data.placa);
       localStorage.setItem("turno", data.turno);
       window.location = "chofer.html";
     } else if (data.role === "supervisor") {
+      localStorage.setItem("userId", data.id);
       window.location = "supervisor.html";
     } else if (data.role === "admin") {
+      localStorage.setItem("userId", data.id);
+      localStorage.setItem("adminName", data.nombre); // Guarda el nombre del admin
       window.location = "admin.html";
     }
   } else {
