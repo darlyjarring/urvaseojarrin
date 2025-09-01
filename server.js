@@ -60,10 +60,27 @@ app.post("/login", async (req, res) => {
     if (!user) {
       return res.status(404).json({ ok: false, msg: "Usuario no encontrado" });
     }
-    const isMatch = await bcrypt.compare(password, user.password);
+
+    let isMatch = false;
+    // Comprueba si la contraseña de la base de datos ya está hasheada
+    if (user.password.startsWith('$2a$') || user.password.startsWith('$2b$')) {
+      isMatch = await bcrypt.compare(password, user.password);
+    } else {
+      // Si la contraseña no está hasheada, realiza una comparación simple (para usuarios antiguos)
+      isMatch = password === user.password;
+      // Si el inicio de sesión es exitoso, hashea y actualiza la contraseña inmediatamente
+      if (isMatch) {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        await User.findByIdAndUpdate(user._id, { password: hashedPassword });
+        console.log(`✅ Contraseña del usuario '${username}' hasheada y actualizada.`);
+      }
+    }
+
     if (!isMatch) {
       return res.status(401).json({ ok: false, msg: "Contraseña incorrecta" });
     }
+
     if (user.role === "chofer" && !placa) {
       return res.status(400).json({ ok: false, msg: "La placa es obligatoria para los choferes" });
     }
