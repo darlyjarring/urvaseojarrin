@@ -130,16 +130,18 @@ async function asignarTarea() {
     const placa = document.getElementById("placaSelect").value;
     const sector = document.getElementById("sectorInput").value;
     const turno = document.getElementById("turnoSelect").value;
+    // --- CAMBIO AQUÍ: Capturamos la fecha del nuevo campo de entrada ---
+    const fecha = document.getElementById("fechaInput").value;
 
-    if (!placa || !sector) {
-        alert("Todos los campos son obligatorios");
+    if (!placa || !sector || !fecha) {
+        alert("Placa, sector y fecha son campos obligatorios");
         return;
     }
 
     const res = await fetch(`${API}/tareas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ placa, sector, turno })
+        body: JSON.stringify({ placa, sector, turno, fecha })
     });
 
     const data = await res.json();
@@ -147,8 +149,10 @@ async function asignarTarea() {
     cargarTareas();
 }
 
+
 async function cargarTareas() {
     const tbody = document.querySelector("#tablaTareas tbody");
+    const thead = document.querySelector("#tablaTareas thead");
     try {
         const res = await fetch(`${API}/tareas`);
         if (!res.ok) {
@@ -156,25 +160,35 @@ async function cargarTareas() {
         }
         const tareas = await res.json();
         
+        thead.innerHTML = `
+            <tr>
+                <th>Placa</th>
+                <th>Sector</th>
+                <th>Turno</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+            </tr>
+        `;
         tbody.innerHTML = "";
 
         tareas.forEach(t => {
             const tr = document.createElement("tr");
+            const fecha = new Date(t.fecha).toLocaleDateString('es-ES');
             
             tr.innerHTML = `
                 <td>${t.placa}</td>
                 <td>${t.sector}</td>
                 <td>${t.turno}</td>
+                <td>${fecha}</td>
                 <td>${t.estado}</td>
             `;
             tbody.appendChild(tr);
 
-            // Se revisa si hay estados de puntos para mostrar antes de crear la fila de detalles
             if (t.estados_detareaxelemntoderuta && t.estados_detareaxelemntoderuta.length > 0) {
                 const trDetalle = document.createElement("tr");
                 trDetalle.classList.add("detalle-fila");
                 const tdDetalle = document.createElement("td");
-                tdDetalle.setAttribute("colspan", "4");
+                tdDetalle.setAttribute("colspan", "5");
                 
                 let puntosHTML = `<ul class="list-unstyled">`;
                 
@@ -193,7 +207,7 @@ async function cargarTareas() {
         });
     } catch (error) {
         console.error("Error al cargar las tareas:", error);
-        tbody.innerHTML = "<tr><td colspan='4'>Error al cargar las tareas. Revisa la consola para más detalles.</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='5'>Error al cargar las tareas. Revisa la consola para más detalles.</td></tr>";
     }
 }
 
