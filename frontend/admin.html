@@ -9,38 +9,44 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f2f5;
+            background-color: #f8f9fa;
+        }
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            margin: 0;
+        }
+        .header-links a {
+            color: white;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .header-links a:hover {
+            background-color: #0056b3;
         }
         .container-fluid {
             padding: 20px;
-        }
-        .card {
-            margin-bottom: 20px;
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .navbar {
-            background-color: #007bff;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            padding: 1rem;
-        }
-        .navbar a {
-            color: white;
-            padding: 10px 15px;
-            text-decoration: none;
-            border-radius: 8px;
-            transition: background-color 0.3s;
-        }
-        .navbar a.active, .navbar a:hover {
-            background-color: #0056b3;
         }
         .section {
             display: none;
         }
         .section.active {
             display: block;
+        }
+        .card {
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: white;
         }
         .status-active {
             color: green;
@@ -52,66 +58,51 @@
         }
         #map {
             height: 500px;
-            border-radius: 8px;
             margin-bottom: 20px;
         }
-        .btn-primary {
-            background-color: #007bff;
-            border: none;
-            border-radius: 8px;
+        .form-label {
+            font-weight: bold;
         }
-        .btn-primary:hover {
-            background-color: #0056b3;
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(0, 0, 0, 0.05);
         }
-        .form-control, .form-select {
-            border-radius: 8px;
-        }
-        .punto-item {
-            background-color: #e9ecef;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 5px;
-        }
-        table {
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        th {
-            background-color: #007bff;
-            color: white;
-        }
-        .detalle-fila td {
-            background-color: #f8f9fa;
+        .table th, .table td {
+            vertical-align: middle;
         }
     </style>
 </head>
 <body>
 
-<div class="container-fluid">
-    <nav class="navbar">
-        <a href="#placas" class="active">Placas</a>
-        <a href="#rutas">Rutas</a>
-        <a href="#tareas">Tareas</a>
-    </nav>
+<div class="header">
+    <h1>Administrador</h1>
+    <div class="header-links">
+        <a href="#placas" class="active">Gestión de Placas</a>
+        <a href="#rutas">Gestión de Rutas</a>
+        <a href="#tareas">Gestión de Tareas</a>
+    </div>
+</div>
 
+<div class="container-fluid">
     <!-- Sección de Placas -->
     <section id="placas-section" class="section active">
-        <div class="card p-4">
+        <div class="card">
             <h2>Gestión de Placas</h2>
+            <h4>Registrar Nueva Placa</h4>
             <div class="row g-3 mb-4">
                 <div class="col-md-4">
-                    <input type="text" id="nuevaPlaca" class="form-control" placeholder="Nueva Placa">
+                    <input type="text" id="nuevaPlaca" class="form-control" placeholder="Ej: ABC-1234">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <select id="estadoPlaca" class="form-select">
                         <option value="true">Activa</option>
                         <option value="false">Inactiva</option>
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <button class="btn btn-primary w-100" onclick="registrarPlaca()">Registrar Placa</button>
+                <div class="col-md-2">
+                    <button class="btn btn-success w-100" onclick="registrarPlaca()">Registrar</button>
                 </div>
             </div>
+            <h4>Listado de Placas</h4>
             <div class="table-responsive">
                 <table id="tablaPlacas" class="table table-striped table-hover">
                     <thead>
@@ -130,7 +121,7 @@
 
     <!-- Sección de Rutas -->
     <section id="rutas-section" class="section">
-        <div class="card p-4">
+        <div class="card">
             <h2>Gestión de Rutas</h2>
             <div id="map"></div>
             <div class="row g-3 mb-4">
@@ -159,14 +150,15 @@
 
     <!-- Sección de Tareas -->
     <section id="tareas-section" class="section">
-        <div class="card p-4">
-            <h2>Asignar Tarea</h2>
-            <div class="row g-3 mb-4">
+        <div class="card">
+            <h2>Gestión de Tareas</h2>
+            <h4>Asignar Tarea</h4>
+            <div class="row g-3 mb-4 align-items-end">
                 <div class="col-md-3">
                     <select id="placaSelect" class="form-select"></select>
                 </div>
                 <div class="col-md-3">
-                    <input list="rutaList" id="sectorInput" class="form-control" placeholder="Sector">
+                    <input list="rutaList" id="sectorInput" class="form-control" placeholder="Sector / Ruta">
                     <datalist id="rutaList"></datalist>
                 </div>
                 <div class="col-md-3">
@@ -177,12 +169,14 @@
                     </select>
                 </div>
                 <div class="col-md-3">
+                    <button class="btn btn-success w-100" onclick="asignarTarea()">Asignar</button>
+                </div>
+                <div class="col-md-3">
                     <input type="date" id="fechaInput" class="form-control">
                 </div>
             </div>
-            <button class="btn btn-primary mb-4" onclick="asignarTarea()">Asignar Tarea</button>
 
-            <!-- Sección de Filtros y Replicación -->
+            <h4>Tareas Asignadas</h4>
             <div class="row g-3 mb-4">
                 <div class="col-md-3">
                     <label for="filtroFecha" class="form-label">Filtrar por Fecha</label>
@@ -197,8 +191,8 @@
                         <option value="Noche">Noche</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <button id="btnReplicarTurno" class="btn btn-secondary w-100 mt-4">Replicar Turno Anterior</button>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button id="btnReplicarTurno" class="btn btn-secondary w-100">Replicar Turno Anterior</button>
                 </div>
             </div>
             
@@ -214,7 +208,7 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="js/admin.js"></script>
+<script src="admin.js"></script>
 
 </body>
 </html>
