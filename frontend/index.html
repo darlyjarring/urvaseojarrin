@@ -83,37 +83,14 @@
     button:hover {
       background-color: #0056b3;
     }
-    .custom-modal {
-      display: none;
-      position: fixed;
-      z-index: 1;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.4);
-      justify-content: center;
-      align-items: center;
-    }
-    .modal-content {
-      background-color: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      text-align: center;
-      max-width: 300px;
-    }
-    .modal-text {
-      margin-bottom: 15px;
-      font-size: 1.1em;
-      color: #333;
-    }
-    .modal-button {
-      background-color: #007bff;
-      color: white;
-      border: none;
-      padding: 10px 20px;
+    #message-box {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
       border-radius: 5px;
-      cursor: pointer;
+      display: none;
     }
   </style>
 </head>
@@ -121,21 +98,142 @@
   <div class="login-container">
     <h1>URVASEO Login</h1>
     
-    <div class="form-box">
-      <input type="email" id="email" placeholder="Correo electrónico">
-    </div>
-    <div class="form-box">
-      <input type="password" id="password" placeholder="Contraseña">
-    </div>
+    <div id="message-box" class="hidden"></div>
 
+    <div class="form-box">
+      <input type="text" id="username" placeholder="Usuario" autocomplete="off" required>
+    </div>
+    <div class="form-box">
+      <input type="password" id="password" placeholder="Contraseña" autocomplete="off" required>
+    </div>
     <div class="form-box hidden" id="placaInputBox">
-      <input type="text" id="placa" placeholder="Número de placa">
+      <input type="text" id="placaInput" placeholder="Selecciona tu Placa" autocomplete="off">
       <ul id="placa-list"></ul>
     </div>
     
-    <button>Ingresar</button>
+    <button onclick="login()">Iniciar Sesión</button>
+
+    <p style="margin-top: 20px;">
+      ¿No tienes una cuenta? <a href="register.html" style="color: #007bff; text-decoration: none;">Regístrate aquí</a>
+    </p>
   </div>
   
-  <script src="/js/app.js"></script>
+  <script>
+    const API = "https://urvaseo-backend.onrender.com";
+    let placaSeleccionada = null;
+
+    // Función para mostrar mensajes en una caja de texto
+    function showMessage(message, isError = true) {
+      const messageBox = document.getElementById("message-box");
+      messageBox.innerText = message;
+      messageBox.style.backgroundColor = isError ? "#f8d7da" : "#d4edda";
+      messageBox.style.color = isError ? "#721c24" : "#155724";
+      messageBox.classList.remove("hidden");
+    }
+
+    // Ocultar mensaje al interactuar con el formulario
+    function hideMessage() {
+        document.getElementById("message-box").classList.add("hidden");
+    }
+
+    document.getElementById("username").addEventListener("focus", hideMessage);
+    document.getElementById("password").addEventListener("focus", hideMessage);
+    document.getElementById("placaInput").addEventListener("focus", hideMessage);
+
+    // Evento que se dispara al hacer clic/tocar o presionar tab en el campo de contraseña
+    document.getElementById("password").addEventListener("focus", async () => {
+      const username = document.getElementById("username").value;
+      if (username.trim() === "") return;
+
+      try {
+        const res = await fetch(`${API}/check-role`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.role === "chofer") {
+            document.getElementById("placaInputBox").classList.remove("hidden");
+            cargarPlacasActivas();
+          } else {
+            document.getElementById("placaInputBox").classList.add("hidden");
+          }
+        } else {
+          // Si el usuario no existe, ocultamos todo lo que se necesite
+          document.getElementById("placaInputBox").classList.add("hidden");
+        }
+      } catch (err) {
+        console.error("Error al verificar el rol:", err);
+        document.getElementById("placaInputBox").classList.add("hidden");
+      }
+    });
+
+    // Carga las placas activas
+    async function cargarPlacasActivas() {
+      const placaInput = document.getElementById("placaInput");
+      const placaList = document.getElementById("placa-list");
+
+      try {
+        const res = await fetch(`${API}/placas-activas`);
+        const placas = await res.json();
+
+        placaList.innerHTML = "";
+        placas.forEach(p => {
+          const li = document.createElement("li");
+          li.innerText = p.placa;
+          li.addEventListener("click", () => {
+            placaInput.value = p.placa;
+            placaSeleccionada = p.placa;
+            placaList.innerHTML = "";
+          });
+          placaList.appendChild(li);
+        });
+
+      } catch (err) {
+        console.error("Error al cargar las placas:", err);
+      }
+    }
+
+    // Lógica de login
+    async function login() {
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      const placa = placaSeleccionada;
+
+      if (username.trim() === "" || password.trim() === "") {
+        return showMessage("Todos los campos son obligatorios.");
+      }
+      
+      try {
+        const res = await fetch(`${API}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password, placa }),
+        });
+
+        const data = await res.json();
+
+        if (data.ok) {
+          localStorage.setItem("username", username);
+          localStorage.setItem("placa", data.placa);
+          
+          if (data.role === "chofer") {
+            window.location.href = "chofer.html";
+          } else if (data.role === "supervisor") {
+            window.location.href = "supervisor.html";
+          } else if (data.role === "admin") {
+            window.location.href = "admin.html";
+          }
+        } else {
+          showMessage(data.msg);
+        }
+      } catch (err) {
+        console.error("Error al iniciar sesión:", err);
+        showMessage("Error de conexión. Por favor, intenta de nuevo más tarde.");
+      }
+    }
+  </script>
 </body>
 </html>
