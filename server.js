@@ -142,6 +142,7 @@ app.get("/users", async (req, res) => {
 });
 
 // Endpoint para crear placas
+// CORRECCIÓN: Ahora espera el campo `estado` como string
 app.post("/placas", async (req, res) => {
   try {
     const { placa, estado } = req.body;
@@ -169,13 +170,15 @@ app.get("/placas", async (req, res) => {
 });
 
 // Endpoint para actualizar el estado de una placa
-// CORRECCIÓN: ahora acepta el valor booleano 'activo'
+// CORRECCIÓN: El endpoint ahora espera el campo 'estado' como string.
 app.put("/placas/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { activo } = req.body;
-    // No se necesita validación de cadena, ya que esperamos un booleano del frontend.
-    const placaActualizada = await Placa.findByIdAndUpdate(id, { activo }, { new: true });
+    const { estado } = req.body;
+    if (estado !== "activo" && estado !== "inactivo") {
+      return res.status(400).json({ error: "Estado inválido. Debe ser 'activo' o 'inactivo'." });
+    }
+    const placaActualizada = await Placa.findByIdAndUpdate(id, { estado }, { new: true });
     if (!placaActualizada) return res.status(404).json({ error: "Placa no encontrada" });
     res.json({ ok: true, msg: "Placa actualizada", placa: placaActualizada });
   } catch (err) {
@@ -185,10 +188,10 @@ app.put("/placas/:id", async (req, res) => {
 });
 
 // Endpoint para obtener placas activas
+// CORRECCIÓN: Filtra por el estado como string
 app.get("/placas-activas", async (req, res) => {
   try {
-    // CORRECCIÓN: ahora se filtra por el valor booleano `true`
-    const placas = await Placa.find({ activo: true });
+    const placas = await Placa.find({ estado: "activo" });
     res.json(placas);
   } catch (err) {
     console.error(err);
