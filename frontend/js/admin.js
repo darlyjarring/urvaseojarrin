@@ -1,9 +1,12 @@
 // -------------------- VARIABLES GLOBALES --------------------
+// URL de la API de backend.
 const API = "https://urvaseo-backend.onrender.com";
 
+// Variables para el mapa y los puntos de la ruta.
 let map = null;
 let puntos = [];
 let markers = [];
+// Genera un ID de usuario anónimo para el almacenamiento local.
 let userId = localStorage.getItem('anonUserId') || crypto.randomUUID();
 localStorage.setItem('anonUserId', userId);
 
@@ -14,7 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const links = document.querySelectorAll(".header-links a");
     const sections = document.querySelectorAll(".section");
 
-    // Lógica para cambiar de sección al hacer clic en los enlaces del menú
+    // Lógica para cambiar de sección al hacer clic en los enlaces del menú.
     links.forEach(link => {
         link.addEventListener("click", (e) => {
             e.preventDefault();
@@ -26,7 +29,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             sections.forEach(s => s.classList.remove("active"));
             document.getElementById(targetId + "-section").classList.add("active");
 
-            // Cargar datos específicos para cada sección
+            // Cargar datos específicos para cada sección.
             if (targetId === "placas") {
                 cargarPlacas();
             } else if (targetId === "rutas") {
@@ -40,7 +43,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     });
 
-    // Cargar la sección inicial por defecto
+    // Cargar la sección inicial por defecto.
     cargarPlacas();
 
     const botonReplicarTareas = document.getElementById("botonReplicarTareas");
@@ -48,26 +51,35 @@ document.addEventListener("DOMContentLoaded", async () => {
         botonReplicarTareas.addEventListener("click", replicarTareas);
     }
 
-    // Event listeners para los modales
+    // Event listeners para los modales.
     document.querySelector("#modal .close-button").addEventListener("click", cerrarModal);
     document.querySelector("#edit-placa-modal .close-button").addEventListener("click", cerrarModal);
 });
 
 // -------------------- Funciones de Modales --------------------
-
+/**
+ * Muestra un modal con un mensaje y un título.
+ * @param {string} mensaje - El mensaje a mostrar en el modal.
+ * @param {string} [titulo="Mensaje"] - El título del modal.
+ */
 function mostrarModal(mensaje, titulo = "Mensaje") {
     document.getElementById("modal-title").textContent = titulo;
     document.getElementById("modal-message").textContent = mensaje;
     document.getElementById("modal").classList.remove("hidden");
 }
 
+/**
+ * Cierra todos los modales.
+ */
 function cerrarModal() {
     document.getElementById("modal").classList.add("hidden");
     document.getElementById("edit-placa-modal").classList.add("hidden");
 }
 
 // -------------------- Funciones de Placas --------------------
-
+/**
+ * Carga y muestra la lista de placas en la tabla de administración.
+ */
 async function cargarPlacas() {
     try {
         const res = await fetch(`${API}/placas`);
@@ -96,6 +108,9 @@ async function cargarPlacas() {
     }
 }
 
+/**
+ * Registra una nueva placa en la base de datos.
+ */
 async function registrarPlaca() {
     const placa = document.getElementById("nuevaPlaca").value.trim();
     const estado = document.getElementById("estadoPlaca").value;
@@ -126,14 +141,19 @@ async function registrarPlaca() {
     }
 }
 
+/**
+ * Muestra el modal de edición de placa y maneja la actualización.
+ * @param {string} id - El ID de la placa a editar.
+ * @param {string} estadoActual - El estado actual de la placa ("activo" o "inactivo").
+ */
 async function editarPlaca(id, estadoActual) {
     const modal = document.getElementById("edit-placa-modal");
     const estadoSelect = document.getElementById("nuevoEstadoPlaca");
     
-    // Configurar el valor inicial del select
+    // Configurar el valor inicial del select.
     estadoSelect.value = estadoActual;
     
-    // Asignar el evento al botón del modal
+    // Asignar el evento al botón del modal.
     document.getElementById("editar-placa-btn").onclick = async () => {
         const nuevoEstadoLower = estadoSelect.value;
         if (nuevoEstadoLower !== "activo" && nuevoEstadoLower !== "inactivo") {
@@ -164,6 +184,9 @@ async function editarPlaca(id, estadoActual) {
     modal.classList.remove("hidden");
 }
 
+/**
+ * Carga las placas activas para el select de la sección de Tareas.
+ */
 async function cargarPlacasParaSelect() {
     try {
         const res = await fetch(`${API}/placas`);
@@ -185,7 +208,9 @@ async function cargarPlacasParaSelect() {
 }
 
 // -------------------- Funciones de Rutas --------------------
-
+/**
+ * Inicializa el mapa de Leaflet si aún no ha sido inicializado.
+ */
 function inicializarMapa() {
     if (map === null) {
         map = L.map('map').setView([-2.14, -79.96], 13); // Guayaquil, Ecuador
@@ -209,6 +234,9 @@ function inicializarMapa() {
     }
 }
 
+/**
+ * Actualiza la lista de puntos en la interfaz de usuario.
+ */
 function actualizarListaPuntos() {
     const lista = document.getElementById("listaPuntos");
     lista.innerHTML = "";
@@ -219,6 +247,10 @@ function actualizarListaPuntos() {
     });
 }
 
+/**
+ * Guarda una nueva ruta en la base de datos.
+ * @param {Event} e - El evento de formulario.
+ */
 async function guardarRuta(e) {
     e.preventDefault();
     const nombreRuta = document.getElementById("nombreRuta").value;
@@ -250,6 +282,9 @@ async function guardarRuta(e) {
     }
 }
 
+/**
+ * Carga y muestra la lista de rutas en la tabla de administración.
+ */
 async function cargarRutas() {
     const tbody = document.querySelector("#tablaRutas tbody");
     try {
@@ -283,7 +318,9 @@ async function cargarRutas() {
 }
 
 // -------------------- Funciones de Tareas y Asignaciones --------------------
-
+/**
+ * Carga las rutas para el datalist en el formulario de Tareas.
+ */
 async function cargarRutasParaDatalist() {
     const datalist = document.getElementById("rutasDatalist");
     try {
@@ -301,6 +338,10 @@ async function cargarRutasParaDatalist() {
     }
 }
 
+/**
+ * Guarda una nueva tarea en la base de datos.
+ * @param {Event} e - El evento de formulario.
+ */
 async function guardarTarea(e) {
     e.preventDefault();
     const titulo = document.getElementById("tituloTarea").value;
@@ -337,6 +378,9 @@ async function guardarTarea(e) {
     }
 }
 
+/**
+ * Carga y muestra la lista de tareas en la tabla de administración.
+ */
 async function cargarTareas() {
     const tbody = document.querySelector("#tablaTareas tbody");
     try {
@@ -364,6 +408,10 @@ async function cargarTareas() {
     }
 }
 
+/**
+ * Elimina una tarea de la base de datos.
+ * @param {string} tareaId - El ID de la tarea a eliminar.
+ */
 async function eliminarTarea(tareaId) {
     if (!confirm("¿Estás seguro de que quieres eliminar esta tarea?")) return;
     try {
@@ -382,6 +430,9 @@ async function eliminarTarea(tareaId) {
     }
 }
 
+/**
+ * Replica las tareas de un turno y fecha específicos para crear nuevas asignaciones.
+ */
 async function replicarTareas() {
     const filtroFecha = document.getElementById("filtroFecha").value;
     const filtroTurno = document.getElementById("filtroTurno").value;
