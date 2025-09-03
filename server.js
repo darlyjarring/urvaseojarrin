@@ -400,7 +400,7 @@ app.post("/reportes", async (req, res) => {
 
 
 // -------------------- PUERTO --------------------
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor en http://localhost:${PORT}`);
-});
+// -------------------- PUERTO --------------------
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => console.log(`🚀 Backend corriendo en puerto ${PORT}`));
+
