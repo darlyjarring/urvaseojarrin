@@ -108,12 +108,15 @@ async function editarPlaca(id, estadoActual) {
         return;
     }
 
-    const activo = nuevoEstadoLower === "activo";
+    //const activo = nuevoEstadoLower === "activo";
+        // --- CÓDIGO CORREGIDO ---
+    // El servidor espera la propiedad 'estado' con el valor de la cadena.
     await fetch(`${API}/placas/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ activo })
+        body: JSON.stringify({ estado: nuevoEstadoLower }) // ✅ Se cambia 'activo' por 'estado' y se usa la cadena
     });
+    // --- FIN DEL CÓDIGO CORREGIDO ---
     cargarPlacas();
 }
 
