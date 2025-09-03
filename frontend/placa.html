@@ -2,300 +2,44 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>URVASEO - Gestión de Placas</title>
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f0f2f5;
-      margin: 0;
-      padding: 20px;
-      color: #333;
-    }
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      background-color: #fff;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-    h1, h2 {
-      color: #0056b3;
-      border-bottom: 2px solid #eee;
-      padding-bottom: 10px;
-    }
-    .card {
-      background-color: #f9f9f9;
-      padding: 20px;
-      border-radius: 8px;
-      margin-top: 20px;
-      box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
-    }
-    input, select, button {
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      margin-right: 10px;
-    }
-    button {
-      background-color: #007bff;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background-color 0.3s;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 12px;
-      text-align: left;
-    }
-    th {
-      background-color: #f2f2f2;
-      font-weight: bold;
-    }
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-    .status-active {
-      color: green;
-      font-weight: bold;
-    }
-    .status-inactive {
-      color: red;
-      font-weight: bold;
-    }
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 100;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0,0,0,0.5);
-        justify-content: center;
-        align-items: center;
-    }
-    .modal-content {
-        background-color: #fff;
-        padding: 30px;
-        border-radius: 10px;
-        text-align: center;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        width: 90%;
-        max-width: 400px;
-    }
-    .modal-content p {
-        margin-bottom: 20px;
-        font-size: 1.1em;
-    }
-    .modal-content button {
-        margin: 0 10px;
-        padding: 10px 20px;
-    }
-    .notification-box {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 15px 25px;
-        border-radius: 8px;
-        z-index: 1000;
-        opacity: 0;
-        transition: opacity 0.5s ease-in-out;
-        font-weight: bold;
-    }
-    .notification-box.show {
-        opacity: 1;
-    }
-    .notification-box.error {
-        background-color: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-    }
-    .notification-box.success {
-        background-color: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-    }
+    body { font-family: Arial, sans-serif; margin: 30px; }
+    h1, h2 { color: #333; }
+    input, select, button { margin-bottom: 10px; padding: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+    .status-active { color: green; font-weight: bold; }
+    .status-inactive { color: red; font-weight: bold; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Gestión de Placas</h1>
+  <h1>Gestión de Placas</h1>
 
-    <div class="card">
-      <h2>Registrar Nueva Placa</h2>
-      <input id="nuevaPlaca" placeholder="Ej: ABC-1234">
-      <select id="estadoPlaca">
-        <option value="activo">Activa</option>
-        <option value="inactivo">Inactiva</option>
-      </select>
-      <button onclick="registrarPlaca()">Registrar</button>
-    </div>
+  <h2>Registrar Nueva Placa</h2>
+  <input id="nuevaPlaca" placeholder="Ej: ABC-1234">
+  <select id="estadoPlaca">
+    <option value="true">Activa</option>
+    <option value="false">Inactiva</option>
+  </select>
+  <button onclick="registrarPlaca()">Registrar</button>
 
-    <div class="card">
-      <h2>Listado de Placas</h2>
-      <table id="tablaPlacas">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Placa</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="tablaPlacasBody">
-        </tbody>
-      </table>
-    </div>
-  </div>
+  <h2>Listado de Placas</h2>
+  <table id="tablaPlacas">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Placa</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      </tbody>
+  </table>
 
-  <!-- Modal para confirmación -->
-  <div id="confirmationModal" class="modal">
-    <div class="modal-content">
-      <p id="modalMessage"></p>
-      <button class="btn-primary" id="confirmButton">Aceptar</button>
-      <button class="btn-danger" id="cancelButton">Cancelar</button>
-    </div>
-  </div>
-
-  <!-- Notificación -->
-  <div id="notificationBox" class="notification-box"></div>
-
-  <script>
-    const API = "https://urvaseo-backend.onrender.com";
-
-    function showNotification(message, isError = true) {
-      const box = document.getElementById("notificationBox");
-      box.innerText = message;
-      box.className = "notification-box show " + (isError ? "error" : "success");
-      setTimeout(() => {
-        box.classList.remove("show");
-      }, 3000);
-    }
-
-    function showConfirmationModal(message, callback) {
-      const modal = document.getElementById('confirmationModal');
-      const modalMessage = document.getElementById('modalMessage');
-      const confirmBtn = document.getElementById('confirmButton');
-      const cancelBtn = document.getElementById('cancelButton');
-      
-      modalMessage.innerText = message;
-      modal.style.display = 'flex';
-
-      confirmBtn.onclick = () => {
-        modal.style.display = 'none';
-        callback(true);
-      };
-
-      cancelBtn.onclick = () => {
-        modal.style.display = 'none';
-        callback(false);
-      };
-    }
-
-    // 🔹 Cargar y mostrar todas las placas
-    async function cargarPlacas() {
-      try {
-        const res = await fetch(`${API}/placas`);
-        if (!res.ok) {
-          throw new Error(`HTTP error! Status: ${res.status}`);
-        }
-        const placas = await res.json();
-        const tablaPlacasBody = document.getElementById("tablaPlacasBody");
-        tablaPlacasBody.innerHTML = "";
-
-        placas.forEach((p, i) => {
-          const tr = document.createElement("tr");
-          const estadoTexto = p.estado === "activo" ? "Activa" : "Inactiva";
-          const estadoClase = p.estado === "activo" ? "status-active" : "status-inactive";
-          
-          tr.innerHTML = `
-            <td>${i + 1}</td>
-            <td>${p.placa}</td>
-            <td class="${estadoClase}">${estadoTexto}</td>
-            <td>
-              <button onclick="editarPlaca('${p._id}', '${p.estado}')">Editar</button>
-            </td>
-          `;
-          tablaPlacasBody.appendChild(tr);
-        });
-      } catch (err) {
-        console.error("Error al cargar las placas:", err);
-        showNotification("Error al cargar las placas. Revisa la consola para más detalles.");
-      }
-    }
-
-    // 🔹 Registrar nueva placa
-    async function registrarPlaca() {
-      const placa = document.getElementById("nuevaPlaca").value.trim();
-      const estado = document.getElementById("estadoPlaca").value;
-
-      if (!placa) {
-        showNotification("Debe ingresar una placa.");
-        return;
-      }
-
-      try {
-        const res = await fetch(`${API}/placas`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ placa, estado })
-        });
-        
-        if (res.ok) {
-          showNotification("Placa registrada con éxito.", false);
-          document.getElementById("nuevaPlaca").value = "";
-          cargarPlacas();
-        } else {
-          showNotification("Error al registrar la placa.");
-        }
-      } catch (err) {
-        console.error("Error al registrar la placa:", err);
-        showNotification("Error de conexión. Intenta de nuevo más tarde.");
-      }
-    }
-
-    // 🔹 Editar estado de placa (CORREGIDO)
-    async function editarPlaca(id, estadoActual) {
-      const nuevoEstado = estadoActual === "activo" ? "inactivo" : "activo";
-      showConfirmationModal(`¿Estás seguro de que quieres cambiar el estado de la placa a '${nuevoEstado}'?`, async (confirmed) => {
-        if (confirmed) {
-          try {
-            const res = await fetch(`${API}/placas/${id}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ estado: nuevoEstado })
-            });
-            
-            if (res.ok) {
-              showNotification("Estado de la placa actualizado con éxito.", false);
-              cargarPlacas();
-            } else {
-              // Si el estado de la respuesta no es 200, leemos el mensaje de error del servidor
-              const errorData = await res.json();
-              showNotification(`Error: ${errorData.error || res.statusText}`);
-            }
-          } catch (err) {
-            console.error("Error al actualizar la placa:", err);
-            showNotification("Error de conexión. Intenta de nuevo más tarde.");
-          }
-        }
-      });
-    }
-    
-    // Inicialización
-    document.addEventListener("DOMContentLoaded", cargarPlacas);
-  </script>
+  <script src="./js/placa.js"></script>
 </body>
 </html>
