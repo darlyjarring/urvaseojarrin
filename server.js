@@ -2,7 +2,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const bcrypt = require("bcryptjs"); // Importamos bcryptjs
+const bcrypt = require("bcryptjs");
 require("dotenv").config();
 
 // -------------------- MODELOS --------------------
@@ -108,7 +108,6 @@ app.post("/check-role", async (req, res) => {
 });
 
 // Endpoint para crear usuarios
-// Se actualizó la ruta para que coincida con tu frontend
 app.post("/register", async (req, res) => {
   try {
     // Se agregaron los campos adicionales que envía tu formulario
@@ -260,21 +259,36 @@ app.put("/rutas/:rutaId/puntos/:puntoId", async (req, res) => {
 // Endpoint para crear tareas
 app.post("/tareas", async (req, res) => {
   try {
-    const { titulo, descripcion, placa, ruta, turno } = req.body;
+    const { titulo, descripcion, placa, sector, turno, rutaId } = req.body;
 
     // Validación de campos obligatorios
-    if (!titulo || !descripcion || !placa || !ruta || !turno) {
-      return res.status(400).json({ error: "Todos los campos (título, descripción, placa, ruta y turno) son obligatorios." });
+    if (!titulo || !descripcion || !placa || !sector || !turno || !rutaId) {
+      return res.status(400).json({ error: "Todos los campos (título, descripción, placa, sector, turno y rutaId) son obligatorios." });
     }
+    
+    // Buscar la ruta para obtener sus puntos
+    const ruta = await Ruta.findById(rutaId);
+    if (!ruta) {
+      return res.status(404).json({ error: "La ruta especificada no existe." });
+    }
+
+    // Mapear los puntos de la ruta para crear los estados de la tarea
+    const estados_detareaxelemntoderuta = ruta.puntos.map(punto => ({
+      puntoId: punto._id,
+      estado: 'Pendiente'
+    }));
 
     const nuevaTarea = new Tarea({
       titulo,
       descripcion,
       placa,
-      ruta,
+      sector,
       turno,
-      estado: "pendiente", // estado inicial
+      rutaId,
+      estado: "Pendiente", // estado inicial
+      estados_detareaxelemntoderuta
     });
+    
     await nuevaTarea.save();
     res.status(201).json(nuevaTarea);
   } catch (err) {
@@ -403,8 +417,6 @@ app.post("/reportes", async (req, res) => {
   }
 });
 
-
 // -------------------- PUERTO --------------------
---------- PUERTO --------------------
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`🚀 Backend corriendo en puerto ${PORT}`));
