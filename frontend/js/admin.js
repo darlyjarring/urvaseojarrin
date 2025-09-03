@@ -119,6 +119,7 @@ async function editarPlaca(id, estadoActual) {
 
     cargarPlacas();
 }
+
 async function cargarPlacasParaSelect() {
     const res = await fetch(`${API}/placas`);
     const placas = await res.json();
@@ -213,7 +214,7 @@ async function cargarTareas() {
             const tr = document.createElement("tr");
             
             const fechaObj = new Date(t.fecha);
-            const year = fechaObj.getUTCFullYear();
+            const year = fechaObj.getUTCFull-Year();
             const month = String(fechaObj.getUTCMonth() + 1).padStart(2, '0');
             const day = String(fechaObj.getUTCDate()).padStart(2, '0');
             const fecha = `${day}/${month}/${year}`;
