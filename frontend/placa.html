@@ -266,7 +266,7 @@
       }
     }
 
-    // 🔹 Editar estado de placa
+    // 🔹 Editar estado de placa (CORREGIDO)
     async function editarPlaca(id, estadoActual) {
       const nuevoEstado = estadoActual === "activo" ? "inactivo" : "activo";
       showConfirmationModal(`¿Estás seguro de que quieres cambiar el estado de la placa a '${nuevoEstado}'?`, async (confirmed) => {
@@ -282,7 +282,9 @@
               showNotification("Estado de la placa actualizado con éxito.", false);
               cargarPlacas();
             } else {
-              showNotification("Error al actualizar el estado de la placa.");
+              // Si el estado de la respuesta no es 200, leemos el mensaje de error del servidor
+              const errorData = await res.json();
+              showNotification(`Error: ${errorData.error || res.statusText}`);
             }
           } catch (err) {
             console.error("Error al actualizar la placa:", err);
