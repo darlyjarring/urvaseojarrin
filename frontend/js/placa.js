@@ -75,4 +75,3 @@ async function editarPlaca(id, estadoActual) {
 
 // Inicialización
 cargarPlacas();
-
