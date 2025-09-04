@@ -108,15 +108,12 @@ async function editarPlaca(id, estadoActual) {
         return;
     }
 
-    // --- CÓDIGO CORREGIDO ---
-    // El servidor espera la propiedad 'estado' con el valor de la cadena.
+    const activo = nuevoEstadoLower === "activo";
     await fetch(`${API}/placas/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ estado: nuevoEstadoLower }) // ✅ Se cambia 'activo' por 'estado' y se usa la cadena
+        body: JSON.stringify({ activo })
     });
-    // --- FIN DEL CÓDIGO CORREGIDO ---
-
     cargarPlacas();
 }
 
@@ -149,17 +146,16 @@ async function asignarTarea() {
     const placa = document.getElementById("placaSelect").value;
     const sector = document.getElementById("sectorInput").value;
     const turno = document.getElementById("turnoSelect").value;
+    
     const fechaStr = document.getElementById("fechaInput").value;
+    const [year, month, day] = fechaStr.split('-').map(Number);
+    const fecha = new Date(Date.UTC(year, month - 1, day)).toISOString();
 
-    // Validación de campos antes de procesar la fecha
-    if (!placa || !sector || !fechaStr) {
+    if (!placa || !sector || !fecha) {
         alert("Placa, sector y fecha son campos obligatorios");
         return;
     }
     
-    const [year, month, day] = fechaStr.split('-').map(Number);
-    const fecha = new Date(Date.UTC(year, month - 1, day)).toISOString();
-
     const res = await fetch(`${API}/tareas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -214,7 +210,7 @@ async function cargarTareas() {
             const tr = document.createElement("tr");
             
             const fechaObj = new Date(t.fecha);
-            const year = fechaObj.getUTCFull-Year();
+            const year = fechaObj.getUTCFullYear();
             const month = String(fechaObj.getUTCMonth() + 1).padStart(2, '0');
             const day = String(fechaObj.getUTCDate()).padStart(2, '0');
             const fecha = `${day}/${month}/${year}`;
