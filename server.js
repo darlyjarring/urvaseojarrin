@@ -44,93 +44,61 @@ if (!mongoUri) {
 }
 
 mongoose.connect(mongoUri)
-  .then(() => console.log("✅ Conectado a MongoDB Atlas"))
-  .catch(err => {
-    console.error("❌ Error de conexión a MongoDB Atlas", err);
+  .then(() => console.log("🟢 Conectado a MongoDB Atlas"))
+  .catch((err) => {
+    console.error("🔴 Error al conectar a MongoDB Atlas:", err);
     process.exit(1);
   });
 
 // -------------------- ENDPOINTS --------------------
 
-// Endpoint de login y roles
+// ➡️ Rutas de Usuarios
 app.post("/login", async (req, res) => {
-  const { username, password, placa } = req.body;
   try {
+    const { username, password, placa } = req.body;
     const user = await User.findOne({ username });
+
     if (!user) {
-      return res.status(404).json({ ok: false, msg: "Usuario no encontrado" });
+      return res.status(401).json({ error: "Usuario o contraseña incorrectos" });
     }
 
-    let isMatch = false;
-    // Comprueba si la contraseña de la base de datos ya está hasheada
-    if (user.password.startsWith('$2a$') || user.password.startsWith('$2b$')) {
-      isMatch = await bcrypt.compare(password, user.password);
-    } else {
-      // Si la contraseña no está hasheada, realiza una comparación simple (para usuarios antiguos)
-      isMatch = password === user.password;
-      // Si el inicio de sesión es exitoso, hashea y actualiza la contraseña inmediatamente
-      if (isMatch) {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-        await User.findByIdAndUpdate(user._id, { password: hashedPassword });
-        console.log(`✅ Contraseña del usuario '${username}' hasheada y actualizada.`);
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: "Usuario o contraseña incorrectos" });
+    }
+
+    if (user.role === "chofer") {
+      if (!placa) {
+        return res.status(400).json({ error: "Placa es requerida para choferes" });
+      }
+      const placaAsignada = await Placa.findOne({ placa, estado: "activo" });
+      if (!placaAsignada) {
+        return res.status(401).json({ error: "Placa no encontrada o inactiva" });
       }
     }
 
-    if (!isMatch) {
-      return res.status(401).json({ ok: false, msg: "Contraseña incorrecta" });
-    }
-
-    if (user.role === "chofer" && !placa) {
-      return res.status(400).json({ ok: false, msg: "La placa es obligatoria para los choferes" });
-    }
-
-    res.json({ ok: true, role: user.role, placa: placa });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ ok: false, msg: "Error en el servidor" });
-  }
-});
-
-// Endpoint para verificar el rol
-app.post("/check-role", async (req, res) => {
-  const { username } = req.body;
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).json({ ok: false, msg: "Usuario no encontrado" });
-    }
     res.json({ ok: true, role: user.role });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ ok: false, msg: "Error en el servidor" });
+    res.status(500).json({ error: "Error en el servidor" });
   }
 });
 
-// Endpoint para crear usuarios
-app.post("/register", async (req, res) => {
+app.post("/check-role", async (req, res) => {
   try {
-    // Se agregaron los campos adicionales que envía tu formulario
-    const { cedula, nombres, apellidos, username, password, role } = req.body;
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    const newUser = new User({
-      cedula,
-      nombres,
-      apellidos,
-      username,
-      password: hashedPassword,
-      role,
-    });
-    await newUser.save();
-    res.status(201).json({ ok: true, msg: "Usuario creado" });
+    const { username } = req.body;
+    const user = await User.findOne({ username });
+    if (user) {
+      res.json({ role: user.role });
+    } else {
+      res.status(404).json({ error: "Usuario no encontrado" });
+    }
   } catch (err) {
     console.error(err);
-    res.status(500).json({ ok: false, msg: "Error creando usuario" });
+    res.status(500).json({ error: "Error en el servidor" });
   }
 });
 
-// Endpoint para obtener usuarios
 app.get("/users", async (req, res) => {
   try {
     const users = await User.find({});
@@ -141,24 +109,7 @@ app.get("/users", async (req, res) => {
   }
 });
 
-// Endpoint para crear placas
-// CORRECCIÓN: Ahora espera el campo `estado` como string
-app.post("/placas", async (req, res) => {
-  try {
-    const { placa, estado } = req.body;
-    const nuevaPlaca = new Placa({
-      placa,
-      estado,
-    });
-    await nuevaPlaca.save();
-    res.status(201).json({ ok: true, msg: "Placa creada", placa: nuevaPlaca });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Error creando la placa" });
-  }
-});
-
-// Endpoint para obtener placas
+// ➡️ Rutas de Placas
 app.get("/placas", async (req, res) => {
   try {
     const placas = await Placa.find({});
@@ -169,53 +120,57 @@ app.get("/placas", async (req, res) => {
   }
 });
 
-// Endpoint para actualizar el estado de una placa
-// CORRECCIÓN: El endpoint ahora espera el campo 'estado' como string.
+app.post("/placas", async (req, res) => {
+  try {
+    const { placa, estado } = req.body;
+    const nuevaPlaca = new Placa({ placa, estado });
+    await nuevaPlaca.save();
+    res.status(201).json({ ok: true, msg: "Placa creada", placa: nuevaPlaca });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error creando la placa" });
+  }
+});
+
+// 🛑 Este es el endpoint corregido
 app.put("/placas/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { estado } = req.body;
-    if (estado !== "activo" && estado !== "inactivo") {
+    
+    // Validar el estado
+    if (!["activo", "inactivo"].includes(estado)) {
       return res.status(400).json({ error: "Estado inválido. Debe ser 'activo' o 'inactivo'." });
     }
+
     const placaActualizada = await Placa.findByIdAndUpdate(id, { estado }, { new: true });
-    if (!placaActualizada) return res.status(404).json({ error: "Placa no encontrada" });
-    res.json({ ok: true, msg: "Placa actualizada", placa: placaActualizada });
+
+    if (!placaActualizada) {
+      return res.status(404).json({ error: "Placa no encontrada" });
+    }
+
+    res.json({ ok: true, msg: "Estado de la placa actualizado", placa: placaActualizada });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Error actualizando la placa" });
+    res.status(500).json({ error: "Error actualizando el estado de la placa" });
   }
 });
 
-// Endpoint para obtener placas activas
-// CORRECCIÓN: Filtra por el estado como string
-app.get("/placas-activas", async (req, res) => {
+app.delete("/placas/:id", async (req, res) => {
   try {
-    const placas = await Placa.find({ estado: "activo" });
-    res.json(placas);
+    const { id } = req.params;
+    const placaEliminada = await Placa.findByIdAndDelete(id);
+    if (!placaEliminada) {
+      return res.status(404).json({ error: "Placa no encontrada" });
+    }
+    res.json({ ok: true, msg: "Placa eliminada", placa: placaEliminada });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Error obteniendo las placas activas" });
+    res.status(500).json({ error: "Error eliminando la placa" });
   }
 });
 
-// Endpoint para crear rutas
-app.post("/rutas", async (req, res) => {
-  try {
-    const { nombre, puntos } = req.body;
-    const nuevaRuta = new Ruta({
-      nombre,
-      puntos,
-    });
-    await nuevaRuta.save();
-    res.status(201).json(nuevaRuta);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Error creando la ruta" });
-  }
-});
-
-// Endpoint para obtener rutas
+// ➡️ Rutas de Rutas
 app.get("/rutas", async (req, res) => {
   try {
     const rutas = await Ruta.find({});
@@ -226,7 +181,6 @@ app.get("/rutas", async (req, res) => {
   }
 });
 
-// Endpoint para actualizar el estado de una ruta
 app.put("/rutas/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -262,41 +216,25 @@ app.put("/rutas/:rutaId/puntos/:puntoId", async (req, res) => {
   }
 });
 
-// Endpoint para crear tareas
+app.post("/rutas", async (req, res) => {
+  try {
+    const { nombre, puntos } = req.body;
+    const nuevaRuta = new Ruta({ nombre, puntos });
+    await nuevaRuta.save();
+    res.status(201).json({ ok: true, msg: "Ruta creada", ruta: nuevaRuta });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error creando la ruta" });
+  }
+});
+
+// ➡️ Rutas de Tareas
 app.post("/tareas", async (req, res) => {
   try {
-    const { titulo, descripcion, placa, sector, turno, rutaId } = req.body;
-
-    // Validación de campos obligatorios
-    if (!titulo || !descripcion || !placa || !sector || !turno || !rutaId) {
-      return res.status(400).json({ error: "Todos los campos (título, descripción, placa, sector, turno y rutaId) son obligatorios." });
-    }
-    
-    // Buscar la ruta para obtener sus puntos
-    const ruta = await Ruta.findById(rutaId);
-    if (!ruta) {
-      return res.status(404).json({ error: "La ruta especificada no existe." });
-    }
-
-    // Mapear los puntos de la ruta para crear los estados de la tarea
-    const estados_detareaxelemntoderuta = ruta.puntos.map(punto => ({
-      puntoId: punto._id,
-      estado: 'Pendiente'
-    }));
-
-    const nuevaTarea = new Tarea({
-      titulo,
-      descripcion,
-      placa,
-      sector,
-      turno,
-      rutaId,
-      estado: "Pendiente", // estado inicial
-      estados_detareaxelemntoderuta
-    });
-    
+    const { titulo, descripcion, estado } = req.body;
+    const nuevaTarea = new Tarea({ titulo, descripcion, estado });
     await nuevaTarea.save();
-    res.status(201).json(nuevaTarea);
+    res.status(201).json({ ok: true, msg: "Tarea creada", tarea: nuevaTarea });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error creando la tarea" });
@@ -342,17 +280,11 @@ app.delete("/tareas/:id", async (req, res) => {
   }
 });
 
-// Endpoint para crear asignaciones
+// ➡️ Rutas de Asignaciones
 app.post("/asignaciones", async (req, res) => {
   try {
-    const { placa, tarea, chofer, fecha, turno } = req.body;
-    const nuevaAsignacion = new Asignacion({
-      placa,
-      tarea,
-      chofer,
-      fecha,
-      turno
-    });
+    const { placa, chofer, tarea, fecha, turno } = req.body;
+    const nuevaAsignacion = new Asignacion({ placa, chofer, tarea, fecha, turno });
     await nuevaAsignacion.save();
     res.status(201).json({ ok: true, msg: "Asignación creada", asignacion: nuevaAsignacion });
   } catch (err) {
@@ -361,13 +293,9 @@ app.post("/asignaciones", async (req, res) => {
   }
 });
 
-// Endpoint para obtener asignaciones
 app.get("/asignaciones", async (req, res) => {
   try {
-    const asignaciones = await Asignacion.find({})
-      .populate('placa')
-      .populate('tarea')
-      .populate('chofer');
+    const asignaciones = await Asignacion.find({}).populate("placa").populate("chofer").populate("tarea");
     res.json(asignaciones);
   } catch (err) {
     console.error(err);
@@ -375,7 +303,6 @@ app.get("/asignaciones", async (req, res) => {
   }
 });
 
-// Nuevo endpoint para obtener asignaciones por chofer
 app.get("/asignaciones/:choferId", async (req, res) => {
   try {
     const { choferId } = req.params;
@@ -390,7 +317,7 @@ app.get("/asignaciones/:choferId", async (req, res) => {
   }
 });
 
-// Nuevo endpoint para obtener reportes
+// ➡️ Rutas de Reportes
 app.get("/reportes", async (req, res) => {
   try {
     const reportes = await Reporte.find({})
@@ -403,7 +330,6 @@ app.get("/reportes", async (req, res) => {
   }
 });
 
-// Nuevo endpoint para crear un reporte
 app.post("/reportes", async (req, res) => {
   try {
     const { chofer, tarea, fecha, descripcion, fotoUrl, estado } = req.body;
@@ -423,6 +349,27 @@ app.post("/reportes", async (req, res) => {
   }
 });
 
-// -------------------- PUERTO --------------------
+app.post("/reportes/:id/foto", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fotoUrl } = req.body;
+    const reporte = await Reporte.findById(id);
+
+    if (!reporte) {
+      return res.status(404).json({ error: "Reporte no encontrado" });
+    }
+
+    reporte.fotoUrl = fotoUrl;
+    await reporte.save();
+    res.json({ ok: true, msg: "Foto actualizada" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error actualizando la foto del reporte" });
+  }
+});
+
+// -------------------- SERVIDOR --------------------
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`🚀 Backend corriendo en puerto ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor en http://localhost:${PORT}`);
+});
