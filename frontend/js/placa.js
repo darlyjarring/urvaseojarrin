@@ -120,31 +120,31 @@ async function registrarPlaca() {
 
 // 🔹 Editar estado de placa
 async function editarPlaca(id, estadoActual) {
-  const nuevoEstado = estadoActual === "activo" ? "inactivo" : "activo";
-  
-  showConfirmationModal(`¿Estás seguro de que quieres cambiar el estado de la placa a '${nuevoEstado}'?`, async (confirmed) => {
-    if (confirmed) {
-      try {
-        const res = await fetch(`${API}/placas/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ estado: nuevoEstado })
-        });
-        
-        if (res.ok) {
-          showNotification("Estado de la placa actualizado con éxito.", false);
-          cargarPlacas();
-        } else {
-          const errorData = await res.json();
-          showNotification(`Error: ${errorData.error || res.statusText}`);
+    const nuevoEstado = estadoActual === "activo" ? "inactivo" : "activo";
+    showConfirmationModal(`¿Estás seguro de que quieres cambiar el estado de la placa a '${nuevoEstado}'?`, async (confirmed) => {
+        if (confirmed) {
+            try {
+                const res = await fetch(`${API}/placas/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ estado: nuevoEstado })
+                });
+
+                if (res.ok) {
+                    showNotification("Estado de la placa actualizado con éxito.", false);
+                    cargarPlacas();
+                } else {
+                    const errorData = await res.json();
+                    showNotification(`Error: ${errorData.error || res.statusText}`, true);
+                }
+            } catch (err) {
+                console.error("Error al actualizar la placa:", err);
+                showNotification("Error de conexión. Intenta de nuevo más tarde.", true);
+            }
         }
-      } catch (err) {
-        console.error("Error al actualizar la placa:", err);
-        showNotification("Error de conexión. Intenta de nuevo más tarde.");
-      }
-    }
-  });
+    });
 }
+
 
 // Inicialización de la página
 document.addEventListener("DOMContentLoaded", cargarPlacas);
