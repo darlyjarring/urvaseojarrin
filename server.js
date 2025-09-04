@@ -134,30 +134,34 @@ app.post("/placas", async (req, res) => {
 
 // 🛑 Este es el endpoint corregido
 // Nuevo endpoint para editar el estado de la placa
+// 🚀 Endpoint CORREGIDO para editar una placa
 app.put("/placas/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { activo } = req.body;
-    
-    // Validar que 'activo' sea un booleano
-    if (typeof activo !== "boolean") {
-      return res.status(400).json({ ok: false, error: "El campo 'activo' debe ser un valor booleano (true/false)." });
+    const { estado } = req.body;
+
+    // Verificar si el estado recibido es válido según el enum del modelo
+    if (estado && !["activo", "inactivo"].includes(estado)) {
+      return res.status(400).json({ error: "Estado inválido. Debe ser 'activo' o 'inactivo'." });
     }
 
     const placaActualizada = await Placa.findByIdAndUpdate(
       id,
-      { activo },
-      { new: true }
+      { estado },
+      { new: true, runValidators: true } // `new: true` devuelve el documento actualizado; `runValidators: true` ejecuta las validaciones del esquema
     );
-    
-    if (!placaActualizada) {
-      return res.status(404).json({ ok: false, error: "Placa no encontrada" });
-    }
 
-    res.json({ ok: true, msg: "Estado de la placa actualizado con éxito.", placa: placaActualizada });
+    if (!placaActualizada) {
+      return res.status(404).json({ error: "Placa no encontrada." });
+    }
+    res.json({ ok: true, msg: "Placa actualizada", placa: placaActualizada });
   } catch (err) {
     console.error("Error al actualizar la placa:", err);
-    res.status(500).json({ ok: false, error: "Error interno del servidor al actualizar la placa" });
+    // Si la validación de Mongoose falla, capturamos el error
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ error: err.message });
+    }
+    res.status(500).json({ error: "Error interno del servidor al actualizar la placa." });
   }
 });
 
