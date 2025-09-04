@@ -471,3 +471,17 @@ async function cargarRutas() {
         tbody.innerHTML = "<tr><td colspan='2'>Error al cargar las rutas. Revisa la consola para más detalles.</td></tr>";
     }
 }
+
+// Hago las funciones globales para que puedan ser llamadas desde el HTML
+window.cargarPlacas = cargarPlacas;
+window.registrarPlaca = registrarPlaca;
+window.editarPlaca = editarPlaca;
+window.guardarRuta = guardarRuta;
+window.cargarRutas = cargarRutas;
+window.cargarTareas = cargarTareas;
+window.asignarChofer = asignarChofer;
+window.eliminarAsignacion = eliminarAsignacion;
+window.replicarTareas = replicarTareas;
+window.showNotification = showNotification;
+window.showConfirmationModal = showConfirmationModal;
+window.inicializarMapa = inicializarMapa;
