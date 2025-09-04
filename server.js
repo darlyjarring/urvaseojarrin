@@ -133,26 +133,31 @@ app.post("/placas", async (req, res) => {
 });
 
 // 🛑 Este es el endpoint corregido
+// Nuevo endpoint para editar el estado de la placa
 app.put("/placas/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { estado } = req.body;
+    const { activo } = req.body;
     
-    // Validar el estado
-    if (!["activo", "inactivo"].includes(estado)) {
-      return res.status(400).json({ error: "Estado inválido. Debe ser 'activo' o 'inactivo'." });
+    // Validar que 'activo' sea un booleano
+    if (typeof activo !== "boolean") {
+      return res.status(400).json({ ok: false, error: "El campo 'activo' debe ser un valor booleano (true/false)." });
     }
 
-    const placaActualizada = await Placa.findByIdAndUpdate(id, { estado }, { new: true });
-
+    const placaActualizada = await Placa.findByIdAndUpdate(
+      id,
+      { activo },
+      { new: true }
+    );
+    
     if (!placaActualizada) {
-      return res.status(404).json({ error: "Placa no encontrada" });
+      return res.status(404).json({ ok: false, error: "Placa no encontrada" });
     }
 
-    res.json({ ok: true, msg: "Estado de la placa actualizado", placa: placaActualizada });
+    res.json({ ok: true, msg: "Estado de la placa actualizado con éxito.", placa: placaActualizada });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Error actualizando el estado de la placa" });
+    console.error("Error al actualizar la placa:", err);
+    res.status(500).json({ ok: false, error: "Error interno del servidor al actualizar la placa" });
   }
 });
 
