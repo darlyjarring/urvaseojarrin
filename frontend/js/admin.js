@@ -1,4 +1,3 @@
-// -------------------- VARIABLES GLOBALES --------------------
 const API = "https://urvaseo-backend.onrender.com";
 
 let map = null;
@@ -7,54 +6,6 @@ let markers = [];
 let userId = localStorage.getItem('anonUserId') || crypto.randomUUID();
 localStorage.setItem('anonUserId', userId);
 
-// -------------------- FUNCIONES DE UTILIDAD --------------------
-
-// Función para mostrar notificaciones personalizadas
-function showNotification(message, isError = true) {
-    const notification = document.createElement("div");
-    notification.className = `fixed bottom-5 right-5 p-4 rounded-lg shadow-xl text-white transition-transform duration-300 ease-out transform translate-y-full ${isError ? 'bg-red-500' : 'bg-green-500'} z-50`;
-    notification.textContent = message;
-    document.getElementById('notification-container').appendChild(notification);
-
-    // Animar entrada
-    setTimeout(() => {
-        notification.style.transform = 'translateY(0)';
-    }, 100);
-
-    // Animar salida y eliminar
-    setTimeout(() => {
-        notification.style.transform = 'translateY(100%)';
-        notification.addEventListener('transitionend', () => notification.remove());
-    }, 3000);
-}
-
-// Modal de confirmación
-function showConfirmationModal(message, onConfirm) {
-    const modalContainer = document.getElementById('modal-container');
-    const modal = document.createElement("div");
-    modal.className = "fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50";
-    modal.innerHTML = `
-      <div class="bg-white p-6 rounded-lg shadow-xl w-80 text-center">
-        <p class="mb-4 text-lg font-semibold">${message}</p>
-        <div class="flex justify-around">
-          <button id="confirm-yes" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition">Sí</button>
-          <button id="confirm-no" class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition">No</button>
-        </div>
-      </div>
-    `;
-    modalContainer.appendChild(modal);
-
-    document.getElementById('confirm-yes').onclick = () => {
-        onConfirm(true);
-        modal.remove();
-    };
-    document.getElementById('confirm-no').onclick = () => {
-        onConfirm(false);
-        modal.remove();
-    };
-}
-
-// -------------------- INICIALIZACIÓN --------------------
 document.addEventListener("DOMContentLoaded", async () => {
     console.log("ID de usuario anónimo:", userId);
 
@@ -85,17 +36,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     });
 
-    // Cargar sección inicial
+    // Cargar la sección inicial
     cargarPlacas();
 
     const filtroFechaInput = document.getElementById("filtroFecha");
     const filtroTurnoSelect = document.getElementById("filtroTurno");
     const botonReplicar = document.getElementById("btnReplicarTurno");
-
+    
     if (filtroFechaInput && filtroTurnoSelect) {
         filtroFechaInput.addEventListener('change', cargarTareas);
         filtroTurnoSelect.addEventListener('change', cargarTareas);
-
+        
         const hoy = new Date().toISOString().split('T')[0];
         filtroFechaInput.value = hoy;
     }
@@ -103,128 +54,71 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (botonReplicar) {
         botonReplicar.addEventListener('click', replicarTurno);
     }
-
-    // Registrar evento para botón de registrar placa
-    const btnRegistrar = document.getElementById('btnRegistrar');
-    if (btnRegistrar) {
-        btnRegistrar.addEventListener('click', registrarPlaca);
-    }
 });
 
-// -------------------- GESTIÓN DE PLACAS --------------------
-
-// Cargar placas
 async function cargarPlacas() {
+    const res = await fetch(`${API}/placas`);
+    const placas = await res.json();
     const tablaPlacasBody = document.querySelector("#tablaPlacas tbody");
-    tablaPlacasBody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-gray-500">Cargando placas...</td></tr>`;
-    try {
-        const res = await fetch(`${API}/placas`);
-        const placas = await res.json();
+    tablaPlacasBody.innerHTML = "";
 
-        if (!res.ok || !Array.isArray(placas)) {
-            throw new Error(`Error del servidor: ${placas.error || res.statusText}`);
-        }
-
-        tablaPlacasBody.innerHTML = "";
-
-        if (placas.length === 0) {
-            tablaPlacasBody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-gray-500">No hay placas registradas.</td></tr>`;
-            return;
-        }
-
-        placas.forEach((p, i) => {
-            const tr = document.createElement("tr");
-            const estadoTexto = p.estado === "activo" ? "Activa" : "Inactiva";
-            const estadoClase = p.estado === "activo" ? "text-green-600 font-bold" : "text-red-600 font-bold";
-            tr.className = `border-b border-gray-200 hover:bg-gray-50`;
-            tr.innerHTML = `
-              <td class="py-3 px-6 text-left whitespace-nowrap">${i + 1}</td>
-              <td class="py-3 px-6 text-left">${p.placa}</td>
-              <td class="py-3 px-6 text-left ${estadoClase}">${estadoTexto}</td>
-              <td class="py-3 px-6 text-left">
-                <button onclick="editarPlaca('${p._id}', '${p.estado}')" class="bg-yellow-500 text-white py-1 px-3 rounded-lg hover:bg-yellow-600 transition duration-300 shadow-md">
-                  ${p.estado === "activo" ? "Desactivar" : "Activar"}
-                </button>
-              </td>
-            `;
-            tablaPlacasBody.appendChild(tr);
-        });
-    } catch (err) {
-        console.error("Error al cargar las placas:", err);
-        tablaPlacasBody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-red-500">Error al cargar placas. Intenta de nuevo.</td></tr>`;
-        showNotification(`Error al cargar placas. ${err.message}`, true);
-    }
-}
-
-// Registrar placa
-async function registrarPlaca() {
-    const placaInput = document.getElementById("nuevaPlaca");
-    const estadoSelect = document.getElementById("estadoPlaca");
-    const placa = placaInput.value.trim();
-    const estado = estadoSelect.value;
-
-    if (!placa) {
-        showNotification("Debe ingresar una placa.");
-        return;
-    }
-
-    // Validación formato: ABC-1234
-    const regexPlaca = /^[A-Z]{3}-\d{4}$/;
-    if (!regexPlaca.test(placa)) {
-        showNotification("Formato de placa inválido. Ejemplo: ABC-1234");
-        return;
-    }
-
-    try {
-        const res = await fetch(`${API}/placas`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ placa, estado })
-        });
-
-        const data = await res.json();
-        if (res.ok) {
-            placaInput.value = "";
-            showNotification("Placa registrada con éxito.", false);
-            cargarPlacas();
-        } else {
-            showNotification(`Error: ${data.error || res.statusText}`);
-        }
-    } catch (err) {
-        console.error("Error al registrar la placa:", err);
-        showNotification("Error de conexión. Intenta de nuevo más tarde.");
-    }
-}
-
-// Editar estado de placa
-async function editarPlaca(id, estadoActual) {
-    const nuevoEstado = estadoActual === "activo" ? "inactivo" : "activo";
-    showConfirmationModal(`¿Estás seguro de que quieres cambiar el estado de la placa a '${nuevoEstado}'?`, async (confirmed) => {
-        if (confirmed) {
-            try {
-                const res = await fetch(`${API}/placas/${id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ estado: nuevoEstado })
-                });
-
-                if (res.ok) {
-                    showNotification("Estado de la placa actualizado con éxito.", false);
-                    cargarPlacas();
-                } else {
-                    const errorData = await res.json();
-                    showNotification(`Error: ${errorData.error || res.statusText}`);
-                }
-            } catch (err) {
-                console.error("Error al actualizar la placa:", err);
-                showNotification("Error de conexión. Intenta de nuevo más tarde.");
-            }
-        }
+    placas.forEach((p, i) => {
+        const tr = document.createElement("tr");
+        const estadoTexto = p.activo ? "Activa" : "Inactiva";
+        const estadoClase = p.activo ? "status-active" : "status-inactive";
+        tr.innerHTML = `
+            <td>${i + 1}</td>
+            <td>${p.placa}</td>
+            <td class="${estadoClase}">${estadoTexto}</td>
+            <td><button class="btn btn-sm btn-info" onclick="editarPlaca('${p._id}', ${p.activo})">Editar</button></td>
+        `;
+        tablaPlacasBody.appendChild(tr);
     });
 }
 
-// -------------------- (AQUÍ SIGUEN IGUALES TODAS LAS FUNCIONES DE TAREAS Y RUTAS) --------------------
+async function registrarPlaca() {
+    const placa = document.getElementById("nuevaPlaca").value.trim();
+    const activo = document.getElementById("estadoPlaca").value === "true";
 
+    if (!placa) {
+        alert("Debe ingresar una placa");
+        return;
+    }
+
+    const res = await fetch(`${API}/placas`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ placa, activo })
+    });
+
+    if (res.ok) {
+        document.getElementById("nuevaPlaca").value = "";
+        cargarPlacas();
+    } else {
+        alert("Error al registrar la placa.");
+    }
+}
+
+async function editarPlaca(id, estadoActual) {
+    const nuevoEstadoPrompt = prompt("Ingrese el nuevo estado (activo/inactivo):", estadoActual ? "activo" : "inactivo");
+    if (!nuevoEstadoPrompt) return;
+    const nuevoEstadoLower = nuevoEstadoPrompt.toLowerCase();
+    if (nuevoEstadoLower !== "activo" && nuevoEstadoLower !== "inactivo") {
+        alert("Estado inválido. Por favor use 'activo' o 'inactivo'.");
+        return;
+    }
+
+    // --- CÓDIGO CORREGIDO ---
+    // El servidor espera la propiedad 'estado' con el valor de la cadena.
+    await fetch(`${API}/placas/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado: nuevoEstadoLower }) // ✅ Se cambia 'activo' por 'estado' y se usa la cadena
+    });
+    // --- FIN DEL CÓDIGO CORREGIDO ---
+
+    cargarPlacas();
+}
 
 async function cargarPlacasParaSelect() {
     const res = await fetch(`${API}/placas`);
@@ -255,16 +149,17 @@ async function asignarTarea() {
     const placa = document.getElementById("placaSelect").value;
     const sector = document.getElementById("sectorInput").value;
     const turno = document.getElementById("turnoSelect").value;
-    
     const fechaStr = document.getElementById("fechaInput").value;
-    const [year, month, day] = fechaStr.split('-').map(Number);
-    const fecha = new Date(Date.UTC(year, month - 1, day)).toISOString();
 
-    if (!placa || !sector || !fecha) {
+    // Validación de campos antes de procesar la fecha
+    if (!placa || !sector || !fechaStr) {
         alert("Placa, sector y fecha son campos obligatorios");
         return;
     }
     
+    const [year, month, day] = fechaStr.split('-').map(Number);
+    const fecha = new Date(Date.UTC(year, month - 1, day)).toISOString();
+
     const res = await fetch(`${API}/tareas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -319,7 +214,7 @@ async function cargarTareas() {
             const tr = document.createElement("tr");
             
             const fechaObj = new Date(t.fecha);
-            const year = fechaObj.getUTCFullYear();
+            const year = fechaObj.getUTCFull-Year();
             const month = String(fechaObj.getUTCMonth() + 1).padStart(2, '0');
             const day = String(fechaObj.getUTCDate()).padStart(2, '0');
             const fecha = `${day}/${month}/${year}`;
