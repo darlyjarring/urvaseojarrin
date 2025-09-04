@@ -114,13 +114,18 @@
     // -------------------- FUNCIONES DE GESTIÓN DE PLACAS --------------------
 
     // 🔹 Cargar y mostrar todas las placas
-    async function cargarPlacas() {
+   async function cargarPlacas() {
       const tablaPlacasBody = document.querySelector("#tablaPlacas tbody");
       tablaPlacasBody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-gray-500">Cargando placas...</td></tr>`;
       try {
         const res = await fetch(`${API}/placas`);
-        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         const placas = await res.json();
+        
+        // CORRECCIÓN: Verifica si la respuesta fue exitosa y si los datos son un array.
+        // Si no lo es, lanza un error con el mensaje del servidor.
+        if (!res.ok || !Array.isArray(placas)) {
+          throw new Error(`Error del servidor: ${placas.error || res.statusText}`);
+        }
         
         tablaPlacasBody.innerHTML = "";
         
@@ -149,9 +154,9 @@
       } catch (err) {
         console.error("Error al cargar las placas:", err);
         tablaPlacasBody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-red-500">Error al cargar placas. Intenta de nuevo.</td></tr>`;
+        showNotification(`Error al cargar placas. ${err.message}`, true); // Muestra una notificación con el mensaje de error del servidor
       }
     }
-
     // 🔹 Registrar nueva placa
     async function registrarPlaca() {
       const placaInput = document.getElementById("nuevaPlaca");
