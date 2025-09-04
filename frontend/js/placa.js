@@ -27,59 +27,71 @@ function showConfirmationModal(message, onConfirm) {
     <div class="bg-white p-6 rounded-lg shadow-xl w-80 text-center">
       <p class="mb-4 text-lg font-semibold">${message}</p>
       <div class="flex justify-around">
-        <button id="confirmBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Sí</button>
-        <button id="cancelBtn" class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition">Cancelar</button>
+        <button id="confirm-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Sí</button>
+        <button id="cancel-btn" class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">No</button>
       </div>
     </div>
   `;
   document.body.appendChild(modal);
 
-  document.getElementById("confirmBtn").onclick = () => {
-    onConfirm(true);
-    modal.remove();
-  };
+  const confirmBtn = document.getElementById("confirm-btn");
+  const cancelBtn = document.getElementById("cancel-btn");
 
-  document.getElementById("cancelBtn").onclick = () => {
-    onConfirm(false);
+  confirmBtn.addEventListener("click", () => {
     modal.remove();
-  };
+    onConfirm(true);
+  });
+
+  cancelBtn.addEventListener("click", () => {
+    modal.remove();
+    onConfirm(false);
+  });
 }
 
 // 🔹 Cargar y mostrar todas las placas
 async function cargarPlacas() {
   const tablaPlacasBody = document.querySelector("#tablaPlacas tbody");
-  tablaPlacasBody.innerHTML = "";
+  tablaPlacasBody.innerHTML = `<tr><td colspan="4" class="text-center">Cargando...</td></tr>`;
   try {
     const res = await fetch(`${API}/placas`);
-    if (!res.ok) throw new Error("Error al cargar las placas");
+    if (!res.ok) {
+      throw new Error(`HTTP error! Status: ${res.status}`);
+    }
     const placas = await res.json();
+    
+    tablaPlacasBody.innerHTML = "";
+    if (placas.length === 0) {
+        tablaPlacasBody.innerHTML = `<tr><td colspan="4" class="text-center">No hay placas registradas.</td></tr>`;
+        return;
+    }
 
     placas.forEach((p, i) => {
-      // Usamos p.estado en lugar de p.activo
-      const estadoTexto = p.estado === "activo" ? "Activa" : "Inactiva";
-      const estadoClase = p.estado === "activo" ? "status-active" : "status-inactive";
-      
       const tr = document.createElement("tr");
+      const estadoTexto = p.estado === "activo" ? "Activo" : "Inactivo";
+      const estadoClase = p.estado === "activo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
       tr.innerHTML = `
-        <td>${i + 1}</td>
-        <td>${p.placa}</td>
-        <td class="${estadoClase}">${estadoTexto}</td>
-        <td>
-          <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="editarPlaca('${p._id}', '${p.estado}')">
-            Cambiar estado
-          </button>
+        <td class="py-2 px-4 border-b border-gray-200">${i + 1}</td>
+        <td class="py-2 px-4 border-b border-gray-200">${p.placa}</td>
+        <td class="py-2 px-4 border-b border-gray-200"><span class="inline-block px-2 py-1 text-sm font-semibold rounded-full ${estadoClase}">${estadoTexto}</span></td>
+        <td class="py-2 px-4 border-b border-gray-200">
+          <button onclick="editarPlaca('${p._id}', '${p.estado}')" class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm hover:bg-blue-600 transition duration-300">Cambiar Estado</button>
         </td>
       `;
       tablaPlacasBody.appendChild(tr);
     });
   } catch (error) {
     console.error("Error al cargar las placas:", error);
-    showNotification("Error al cargar las placas. Revisa la consola.");
+    tablaPlacasBody.innerHTML = `<tr><td colspan="4" class="text-center text-red-500">Error al cargar las placas.</td></tr>`;
+    showNotification("Error de conexión. Intenta de nuevo más tarde.");
   }
 }
 
 // 🔹 Registrar nueva placa
-async funa) {
+async function registrarPlaca() {
+  const placa = document.getElementById("nuevaPlaca").value.trim();
+  const estado = document.getElementById("estadoPlaca").value;
+
+  if (!placa) {
     showNotification("Debe ingresar una placa.");
     return;
   }
@@ -91,21 +103,18 @@ async funa) {
       body: JSON.stringify({ placa, estado })
     });
 
+    const data = await res.json();
+
     if (res.ok) {
       showNotification("Placa registrada con éxito.", false);
       document.getElementById("nuevaPlaca").value = "";
       cargarPlacas();
     } else {
-      const errorData = await res.json();
-      showNotification(`Error: ${errorData.error || res.statusText}`);
+      showNotification(`Error: ${data.error || "No se pudo registrar la placa."}`);
     }
   } catch (err) {
     console.error("Error al registrar la placa:", err);
-    showNoction registrarPlaca() {
-  const placa = document.getElementById("nuevaPlaca").value.trim();
-  const estado = document.getElementById("estadoPlaca").value; // Ahora el valor es un string
-
-  if (!plactification("Error de conexión. Intenta de nuevo más tarde.");
+    showNotification("Error de conexión. Intenta de nuevo más tarde.");
   }
 }
 
@@ -144,4 +153,5 @@ document.addEventListener("DOMContentLoaded", cargarPlacas);
 window.cargarPlacas = cargarPlacas;
 window.registrarPlaca = registrarPlaca;
 window.editarPlaca = editarPlaca;
-
+window.showNotification = showNotification;
+window.showConfirmationModal = showConfirmationModal;
