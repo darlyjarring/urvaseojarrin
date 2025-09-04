@@ -99,26 +99,34 @@ async function registrarPlaca() {
     }
 }
 
+// 🚀 Función CORREGIDA para editar el estado de la placa
 async function editarPlaca(id, estadoActual) {
-    const nuevoEstadoPrompt = prompt("Ingrese el nuevo estado (activo/inactivo):", estadoActual ? "activo" : "inactivo");
-    if (!nuevoEstadoPrompt) return;
-    const nuevoEstadoLower = nuevoEstadoPrompt.toLowerCase();
-    if (nuevoEstadoLower !== "activo" && nuevoEstadoLower !== "inactivo") {
-        alert("Estado inválido. Por favor use 'activo' o 'inactivo'.");
-        return;
+  const nuevoEstado = estadoActual === "activo" ? "inactivo" : "activo";
+  
+  showConfirmationModal(`¿Estás seguro de que quieres cambiar el estado de la placa a '${nuevoEstado}'?`, async (confirmed) => {
+    if (confirmed) {
+      try {
+        const res = await fetch(`${API}/placas/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ estado: nuevoEstado })
+        });
+        
+        if (res.ok) {
+          showNotification("Estado de la placa actualizado con éxito.", false);
+          cargarPlacas();
+        } else {
+          const errorData = await res.json();
+          showNotification(`Error: ${errorData.error || res.statusText}`);
+        }
+      } catch (err) {
+        console.error("Error al actualizar la placa:", err);
+        showNotification("Error de conexión. Intenta de nuevo más tarde.");
+      }
     }
-
-    // --- CÓDIGO CORREGIDO ---
-    // El servidor espera la propiedad 'estado' con el valor de la cadena.
-    await fetch(`${API}/placas/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ estado: nuevoEstadoLower }) // ✅ Se cambia 'activo' por 'estado' y se usa la cadena
-    });
-    // --- FIN DEL CÓDIGO CORREGIDO ---
-
-    cargarPlacas();
+  });
 }
+
 
 async function cargarPlacasParaSelect() {
     const res = await fetch(`${API}/placas`);
