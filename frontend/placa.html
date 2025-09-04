@@ -1,75 +1,32 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Gestión de Placas</title>
-  <script src="./js/admin.js" defer></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 font-sans leading-normal tracking-normal">
-
-  <!-- Encabezado -->
-  <header class="bg-blue-600 text-white p-4 shadow-md">
-    <h1 class="text-2xl font-bold text-center">Gestión de Placas</h1>
-  </header>
-
-  <main class="p-6">
-    <!-- Formulario de registro -->
-    <section class="bg-white p-6 rounded-lg shadow-lg mb-6">
-      <h2 class="text-xl font-semibold mb-4">Registrar nueva placa</h2>
-      <div class="flex flex-col md:flex-row md:items-end gap-4">
-        <div class="flex-1">
-          <label for="nuevaPlaca" class="block mb-1 text-gray-700">Placa</label>
-          <input id="nuevaPlaca" type="text" placeholder="Ej: ABC-1234" 
-            class="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-blue-200">
+<div class="card">
+    <h2>Gestión de Placas</h2>
+    <h4>Registrar Nueva Placa</h4>
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <input type="text" id="nuevaPlaca" class="form-control" placeholder="Ej: ABC-1234">
         </div>
-
-        <div>
-          <label for="estadoPlaca" class="block mb-1 text-gray-700">Estado</label>
-          <select id="estadoPlaca" class="px-4 py-2 border rounded-lg focus:ring focus:ring-blue-200">
-            <option value="activo">Activo</option>
-            <option value="inactivo">Inactivo</option>
-          </select>
+        <div class="col-md-3">
+            <select id="estadoPlaca" class="form-select">
+                <option value="true">Activa</option>
+                <option value="false">Inactiva</option>
+            </select>
         </div>
-
-        <div>
-          <button id="btnRegistrar" 
-            class="bg-green-500 text-white px-6 py-2 rounded-lg shadow hover:bg-green-600 transition">
-            Registrar
-          </button>
+        <div class="col-md-2">
+            <button class="btn btn-success w-100" onclick="registrarPlaca()">Registrar</button>
         </div>
-      </div>
-    </section>
-
-    <!-- Tabla de placas -->
-    <section class="bg-white p-6 rounded-lg shadow-lg">
-      <h2 class="text-xl font-semibold mb-4">Listado de placas</h2>
-      <div class="overflow-x-auto">
-        <table id="tablaPlacas" class="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <thead class="bg-gray-100 text-gray-700">
-            <tr>
-              <th class="py-3 px-6 text-left">#</th>
-              <th class="py-3 px-6 text-left">Placa</th>
-              <th class="py-3 px-6 text-left">Estado</th>
-              <th class="py-3 px-6 text-left">Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td colspan="4" class="py-4 text-center text-gray-500">Cargando placas...</td>
-            </tr>
-          </tbody>
+    </div>
+    <h4>Listado de Placas</h4>
+    <div class="table-responsive">
+        <table id="tablaPlacas" class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Placa</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
         </table>
-      </div>
-    </section>
-  </main>
-
-  <!-- Contenedor para notificaciones -->
-  <div id="notification-container"></div>
-
-  <!-- Contenedor para modales -->
-  <div id="modal-container"></div>
-
-</body>
-</html>
-
+    </div>
+</div>
