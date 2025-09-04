@@ -99,34 +99,23 @@ async function registrarPlaca() {
     }
 }
 
-// 🚀 Función CORREGIDA para editar el estado de la placa
 async function editarPlaca(id, estadoActual) {
-  const nuevoEstado = estadoActual === "activo" ? "inactivo" : "activo";
-  
-  showConfirmationModal(`¿Estás seguro de que quieres cambiar el estado de la placa a '${nuevoEstado}'?`, async (confirmed) => {
-    if (confirmed) {
-      try {
-        const res = await fetch(`${API}/placas/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ estado: nuevoEstado })
-        });
-        
-        if (res.ok) {
-          showNotification("Estado de la placa actualizado con éxito.", false);
-          cargarPlacas();
-        } else {
-          const errorData = await res.json();
-          showNotification(`Error: ${errorData.error || res.statusText}`);
-        }
-      } catch (err) {
-        console.error("Error al actualizar la placa:", err);
-        showNotification("Error de conexión. Intenta de nuevo más tarde.");
-      }
+    const nuevoEstadoPrompt = prompt("Ingrese el nuevo estado (activo/inactivo):", estadoActual ? "activo" : "inactivo");
+    if (!nuevoEstadoPrompt) return;
+    const nuevoEstadoLower = nuevoEstadoPrompt.toLowerCase();
+    if (nuevoEstadoLower !== "activo" && nuevoEstadoLower !== "inactivo") {
+        alert("Estado inválido. Por favor use 'activo' o 'inactivo'.");
+        return;
     }
-  });
-}
 
+    const activo = nuevoEstadoLower === "activo";
+    await fetch(`${API}/placas/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ activo })
+    });
+    cargarPlacas();
+}
 
 async function cargarPlacasParaSelect() {
     const res = await fetch(`${API}/placas`);
@@ -157,17 +146,16 @@ async function asignarTarea() {
     const placa = document.getElementById("placaSelect").value;
     const sector = document.getElementById("sectorInput").value;
     const turno = document.getElementById("turnoSelect").value;
+    
     const fechaStr = document.getElementById("fechaInput").value;
+    const [year, month, day] = fechaStr.split('-').map(Number);
+    const fecha = new Date(Date.UTC(year, month - 1, day)).toISOString();
 
-    // Validación de campos antes de procesar la fecha
-    if (!placa || !sector || !fechaStr) {
+    if (!placa || !sector || !fecha) {
         alert("Placa, sector y fecha son campos obligatorios");
         return;
     }
     
-    const [year, month, day] = fechaStr.split('-').map(Number);
-    const fecha = new Date(Date.UTC(year, month - 1, day)).toISOString();
-
     const res = await fetch(`${API}/tareas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -222,7 +210,7 @@ async function cargarTareas() {
             const tr = document.createElement("tr");
             
             const fechaObj = new Date(t.fecha);
-            const year = fechaObj.getUTCFull-Year();
+            const year = fechaObj.getUTCFullYear();
             const month = String(fechaObj.getUTCMonth() + 1).padStart(2, '0');
             const day = String(fechaObj.getUTCDate()).padStart(2, '0');
             const fecha = `${day}/${month}/${year}`;
@@ -471,17 +459,3 @@ async function cargarRutas() {
         tbody.innerHTML = "<tr><td colspan='2'>Error al cargar las rutas. Revisa la consola para más detalles.</td></tr>";
     }
 }
-
-// Hago las funciones globales para que puedan ser llamadas desde el HTML
-window.cargarPlacas = cargarPlacas;
-window.registrarPlaca = registrarPlaca;
-window.editarPlaca = editarPlaca;
-window.guardarRuta = guardarRuta;
-window.cargarRutas = cargarRutas;
-window.cargarTareas = cargarTareas;
-//window.asignarChofer = asignarChofer;
-//window.eliminarAsignacion = eliminarAsignacion;
-window.replicarTareas = replicarTurno;
-//window.showNotification = showNotification;
-//window.showConfirmationModal = showConfirmationModal;
-//window.inicializarMapa = inicializarMapa;
