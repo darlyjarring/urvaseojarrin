@@ -39,11 +39,21 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function cargarTareas() {
+    // Verificamos si la placa o el turno son 'undefined'
+    if (!placa || !turno || turno === 'undefined') {
+        alert("Error: Falta información del chofer. Inicia sesión nuevamente.");
+        window.location.href = "index.html"; // Redirecciona al login
+        return;
+    }
+
     try {
         const res = await fetch(`${API}/tareas/chofer/${placa}/${turno}`);
+        
         if (!res.ok) {
+            const tareasLista = document.getElementById('tareas-lista');
             if (res.status === 404) {
-                document.getElementById('tareas-lista').innerHTML = "<p>No tienes tareas asignadas para este turno y fecha.</p>";
+                // ✅ Corrección: Ahora `tareasLista` no será nulo
+                tareasLista.innerHTML = "<p>No tienes tareas asignadas para este turno y fecha.</p>";
                 return;
             }
             throw new Error(`Error al cargar las tareas: ${res.statusText}`);
