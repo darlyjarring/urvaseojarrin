@@ -8,16 +8,16 @@ async function cargarPlacas() {
   tablaPlacasBody.innerHTML = "";
 
   placas.forEach((p, i) => {
-    // Poblar la tabla de placas
+    const estadoTexto = p.estado === "activo" ? "Activa" : "Inactiva";
+    const estadoClase = p.estado === "activo" ? "status-active" : "status-inactive";
+    
     const tr = document.createElement("tr");
-    const estadoTexto = p.estado ? "Activa" : "Inactiva";
-    const estadoClase = p.estado ? "status-active" : "status-inactive";
     tr.innerHTML = `
       <td>${i + 1}</td>
       <td>${p.placa}</td>
       <td class="${estadoClase}">${estadoTexto}</td>
       <td>
-        <button onclick="editarPlaca('${p._id}', '${p.estado}')">Editar</button>
+        <button class="btn btn-sm btn-info" onclick="editarPlaca('${p._id}', '${p.estado}')">Editar</button>
       </td>
     `;
     tablaPlacasBody.appendChild(tr);
