@@ -303,12 +303,14 @@ async function replicarTurno() {
         // Paso 3: Replicar las tareas
         const replicadas = [];
         for (const tarea of tareasOrigen) {
-            const nuevaTarea = {
-                placa: tarea.placa,
-                sector: tarea.sector,
-                turno: turnoDestino,
-                fecha: fechaDestinoStr,
-                userId: userId 
+            const nuevaTarea = { placa: tarea.placa, 
+                                sector: tarea.sector, 
+                                turno: turnoDestino, 
+                                fecha: fechaDestinoStr, 
+                                userId: userId, 
+                                titulo: tarea.titulo, 
+                                descripcion: tarea.descripcion, 
+                                rutaId: tarea.rutaId 
             };
             
             const resReplica = await fetch(`${API}/tareas`, {
