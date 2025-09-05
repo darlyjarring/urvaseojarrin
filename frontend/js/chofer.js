@@ -3,7 +3,6 @@ const API = "https://urvaseo-backend.onrender.com";
 const choferId = localStorage.getItem("choferId");
 const placa = localStorage.getItem("placa");
 
-// ✅ Nuevo: Función para obtener el turno basado en la hora actual
 function obtenerTurnoActual() {
     const ahora = new Date();
     const hora = ahora.getHours();
@@ -17,7 +16,6 @@ function obtenerTurnoActual() {
     }
 }
 
-// ✅ Nuevo: Obtenemos el turno de forma automática
 const turno = obtenerTurnoActual();
 
 let map = null;
@@ -54,7 +52,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function cargarTareas() {
-    // Verificamos si la placa o el turno son 'undefined'
     if (!placa || !turno) {
         alert("Error: Falta información del chofer. Inicia sesión nuevamente.");
         window.location.href = "index.html";
@@ -83,39 +80,52 @@ async function cargarTareas() {
     }
 }
 
+// ✅ Función para crear el contenido del popup dinámicamente
+function crearContenidoPopup(punto, puntoEstado, tareaId) {
+    let botonesHTML = '';
+    
+    // Botón para reportar siempre está disponible
+    const botonObservacion = `<button class="btn btn-sm btn-outline-info" onclick="reportarObservacion('${tareaId}', '${puntoEstado.puntoId}')">Observación</button>`;
+
+    if (puntoEstado.estado === 'pendiente') {
+        botonesHTML = `
+            <button class="btn btn-sm btn-outline-warning" onclick="marcarPunto('${tareaId}', '${puntoEstado.puntoId}', 'en proceso')">En Proceso</button>
+            ${botonObservacion}
+        `;
+    } else if (puntoEstado.estado === 'en proceso') {
+        botonesHTML = `
+            <button class="btn btn-sm btn-outline-success" onclick="marcarPunto('${tareaId}', '${puntoEstado.puntoId}', 'ejecutada')">Terminada</button>
+            ${botonObservacion}
+        `;
+    } else if (puntoEstado.estado === 'ejecutada') {
+        botonesHTML = `
+            <span class="text-success fw-bold">Punto Completado</span>
+            ${botonObservacion}
+        `;
+    }
+
+    return `
+        <div class="popup-content">
+            <b>${punto.nombre}</b><br>
+            Estado: <b>${puntoEstado.estado}</b>
+            <hr>
+            ${botonesHTML}
+        </div>
+    `;
+}
+
 function mostrarDetalleTarea() {
+    // Esta función ya no es necesaria si todo se maneja desde el mapa
+    // pero la mantendremos para compatibilidad si el usuario la usa en otro lado
     if (!tareaActual) return;
-
-    const listaContainer = document.getElementById('tareas-lista'); // ID corregido
+    const listaContainer = document.getElementById('tareas-lista');
     listaContainer.innerHTML = "";
-
     const titulo = document.createElement("h3");
     titulo.textContent = tareaActual.rutaId.nombre;
     listaContainer.appendChild(titulo);
-
-    const ul = document.createElement("ul");
-    ul.className = "list-unstyled";
-
-    tareaActual.estados_detareaxelemntoderuta.forEach(puntoEstado => {
-        const punto = tareaActual.rutaId.puntos.find(p => p._id === puntoEstado.puntoId);
-        if (!punto) return;
-
-        const li = document.createElement("li");
-        li.className = "punto-item";
-        li.innerHTML = `
-            <strong>${punto.nombre}</strong> - Estado: ${puntoEstado.estado}
-            <div class="btn-group" role="group">
-                <button class="btn btn-sm btn-outline-warning" onclick="marcarPunto('${tareaActual._id}', '${puntoEstado.puntoId}', 'en proceso')">En Proceso</button>
-                <button class="btn btn-sm btn-outline-success" onclick="marcarPunto('${tareaActual._id}', '${puntoEstado.puntoId}', 'ejecutada')">Terminada</button>
-                <button class="btn btn-sm btn-outline-info" onclick="reportarObservacion('${tareaActual._id}', '${puntoEstado.puntoId}')">Observación</button>
-            </div>
-        `;
-        ul.appendChild(li);
-    });
-
-    listaContainer.appendChild(ul);
 }
 
+// ✅ Función actualizada para crear marcadores con popups interactivos
 function actualizarMapa() {
     if (!tareaActual || !tareaActual.rutaId || !tareaActual.rutaId.puntos) return;
 
@@ -136,8 +146,10 @@ function actualizarMapa() {
         const icon = estadoIconos[estadoPunto] || estadoIconos["pendiente"];
         const puntoData = tareaActual.rutaId.puntos[index];
 
+        const popupContent = crearContenidoPopup(puntoData, estadosPuntos[index], tareaActual._id);
+
         const marker = L.marker(punto, { icon }).addTo(map)
-            .bindPopup(`<b>${puntoData.nombre}</b><br>Estado: ${estadoPunto}`);
+            .bindPopup(popupContent);
         markers.push(marker);
     });
 
