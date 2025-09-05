@@ -57,25 +57,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function cargarPlacas() {
-    const res = await fetch(`${API}/placas`);
-    const placas = await res.json();
-    const tablaPlacasBody = document.querySelector("#tablaPlacas tbody");
-    tablaPlacasBody.innerHTML = "";
+  const res = await fetch(`${API}/placas`);
+  const placas = await res.json();
+  const tablaPlacasBody = document.querySelector("#tablaPlacas tbody");
+  tablaPlacasBody.innerHTML = "";
 
-    placas.forEach((p, i) => {
-        const tr = document.createElement("tr");
-        const estadoTexto = p.estado ? "Activa" : "Inactiva";
-        const estadoClase = p.estado ? "status-active" : "status-inactive";
-        tr.innerHTML = `
-            <td>${i + 1}</td>
-            <td>${p.placa}</td>
-            <td class="${estadoClase}">${estadoTexto}</td>
-            <td><button class="btn btn-sm btn-info" onclick="editarPlaca('${p._id}', '${p.estado}')">Editar</button></td>
-        `;
-        tablaPlacasBody.appendChild(tr);
-    });
+  placas.forEach((p, i) => {
+    const estadoTexto = p.estado === "activo" ? "Activa" : "Inactiva";
+    const estadoClase = p.estado === "activo" ? "status-active" : "status-inactive";
+    
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${p.placa}</td>
+      <td class="${estadoClase}">${estadoTexto}</td>
+      <td>
+        <button class="btn btn-sm btn-info" onclick="editarPlaca('${p._id}', '${p.estado}')">Editar</button>
+      </td>
+    `;
+    tablaPlacasBody.appendChild(tr);
+  });
 }
-
 async function registrarPlaca() {
     const placa = document.getElementById("nuevaPlaca").value.trim();
     const estado = document.getElementById("estadoPlaca").value === "true";
