@@ -1,14 +1,29 @@
 const API = "https://urvaseo-backend.onrender.com";
+
 const choferId = localStorage.getItem("choferId");
 const placa = localStorage.getItem("placa");
-const turno = localStorage.getItem("turno");
 
-const map = L.map('map').setView([-2.2, -79.9], 13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+// ✅ Nuevo: Función para obtener el turno basado en la hora actual
+function obtenerTurnoActual() {
+    const ahora = new Date();
+    const hora = ahora.getHours();
+    
+    if (hora >= 7 && hora < 15) {
+        return "Mañana";
+    } else if (hora >= 15 && hora < 23) {
+        return "Tarde";
+    } else {
+        return "Noche";
+    }
+}
 
+// ✅ Nuevo: Obtenemos el turno de forma automática
+const turno = obtenerTurnoActual();
+
+let map = null;
 let markers = [];
 let polyline = null;
-let tareaActual = null; // Almacenaremos la tarea completa aquí
+let tareaActual = null;
 
 // --- Definición de Íconos SVG Personalizados ---
 const getIcon = (color) => {
@@ -40,19 +55,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function cargarTareas() {
     // Verificamos si la placa o el turno son 'undefined'
-    if (!placa || !turno || turno === 'undefined') {
+    if (!placa || !turno) {
         alert("Error: Falta información del chofer. Inicia sesión nuevamente.");
-        window.location.href = "index.html"; // Redirecciona al login
+        window.location.href = "index.html";
         return;
     }
 
     try {
         const res = await fetch(`${API}/tareas/chofer/${placa}/${turno}`);
+        const tareasLista = document.getElementById('tareas-lista');
         
         if (!res.ok) {
-            const tareasLista = document.getElementById('tareas-lista');
             if (res.status === 404) {
-                // ✅ Corrección: Ahora `tareasLista` no será nulo
                 tareasLista.innerHTML = "<p>No tienes tareas asignadas para este turno y fecha.</p>";
                 return;
             }
@@ -72,21 +86,19 @@ async function cargarTareas() {
 function mostrarDetalleTarea() {
     if (!tareaActual) return;
 
-    const listaContainer = document.getElementById('tareas-lista-container');
-    listaContainer.innerHTML = ""; // Limpia el contenedor
+    const listaContainer = document.getElementById('tareas-lista'); // ID corregido
+    listaContainer.innerHTML = "";
 
-    // Título de la ruta
     const titulo = document.createElement("h3");
     titulo.textContent = tareaActual.rutaId.nombre;
     listaContainer.appendChild(titulo);
 
-    // Lista de puntos
     const ul = document.createElement("ul");
     ul.className = "list-unstyled";
 
     tareaActual.estados_detareaxelemntoderuta.forEach(puntoEstado => {
         const punto = tareaActual.rutaId.puntos.find(p => p._id === puntoEstado.puntoId);
-        if (!punto) return; // Asegura que el punto exista
+        if (!punto) return;
 
         const li = document.createElement("li");
         li.className = "punto-item";
@@ -107,7 +119,11 @@ function mostrarDetalleTarea() {
 function actualizarMapa() {
     if (!tareaActual || !tareaActual.rutaId || !tareaActual.rutaId.puntos) return;
 
-    // Limpia marcadores y polilínea anteriores
+    if (!map) {
+        map = L.map('map').setView([-2.2, -79.9], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    }
+    
     markers.forEach(m => map.removeLayer(m));
     if (polyline) map.removeLayer(polyline);
     markers = [];
@@ -115,7 +131,6 @@ function actualizarMapa() {
     const puntosRuta = tareaActual.rutaId.puntos.map(p => [p.lat, p.lng]);
     const estadosPuntos = tareaActual.estados_detareaxelemntoderuta;
 
-    // Agrega marcadores con el icono correcto según el estado
     puntosRuta.forEach((punto, index) => {
         const estadoPunto = estadosPuntos[index].estado;
         const icon = estadoIconos[estadoPunto] || estadoIconos["pendiente"];
@@ -126,10 +141,7 @@ function actualizarMapa() {
         markers.push(marker);
     });
 
-    // Dibuja la polilínea
     polyline = L.polyline(puntosRuta, { color: 'blue' }).addTo(map);
-
-    // Ajusta la vista del mapa para que se adapte a la ruta
     map.fitBounds(polyline.getBounds());
 }
 
@@ -143,7 +155,7 @@ async function marcarPunto(tareaId, puntoId, nuevoEstado) {
         if (res.ok) {
             await res.json();
             alert("Estado de la tarea actualizado con éxito.");
-            cargarTareas(); // Recarga las tareas para reflejar los cambios
+            cargarTareas();
         } else {
             throw new Error("Error al actualizar el estado del punto.");
         }
