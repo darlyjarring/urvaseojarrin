@@ -17,7 +17,7 @@ async function cargarPlacas() {
       <td>${p.placa}</td>
       <td class="${estadoClase}">${estadoTexto}</td>
       <td>
-        <button onclick="editarPlaca('${p._id}', ${p.estado})">Editar</button>
+        <button onclick="editarPlaca('${p._id}', '${p.estado}')">Editar</button>
       </td>
     `;
     tablaPlacasBody.appendChild(tr);
