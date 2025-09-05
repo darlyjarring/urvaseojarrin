@@ -452,6 +452,7 @@ app.get("/tareas/chofer/:placa/:turno", async (req, res) => {
     }
 });
 
+// Endpoint para actualizar el estado de un punto en una tarea
 app.put("/tareas/:tareaId/puntos/:puntoId", async (req, res) => {
     try {
         const { tareaId, puntoId } = req.params;
@@ -468,25 +469,9 @@ app.put("/tareas/:tareaId/puntos/:puntoId", async (req, res) => {
         }
 
         puntoEnTarea.estado = estado;
-
-        // ✅ Lógica para actualizar el estado general de la tarea
-        const totalPuntos = tarea.estados_detareaxelemntoderuta.length;
-        const puntosEjecutados = tarea.estados_detareaxelemntoderuta.filter(p => p.estado === 'ejecutada').length;
-
-        if (puntosEjecutados === totalPuntos) {
-            // Si todos los puntos están ejecutados, la tarea está terminada
-            tarea.estado = 'terminada';
-        } else if (puntosEjecutados > 0) {
-            // Si hay al menos un punto ejecutado, la tarea está en proceso
-            tarea.estado = 'en proceso';
-        } else {
-            // Si no hay puntos ejecutados, la tarea está pendiente
-            tarea.estado = 'pendiente';
-        }
-        
         await tarea.save();
 
-        res.status(200).json({ ok: true, msg: "Estado del punto y la tarea actualizado." });
+        res.status(200).json({ ok: true, msg: "Estado del punto actualizado." });
     } catch (err) {
         console.error("Error al actualizar el estado del punto:", err);
         res.status(500).json({ error: "Error interno del servidor." });
