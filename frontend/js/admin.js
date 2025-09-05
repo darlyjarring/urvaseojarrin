@@ -143,28 +143,43 @@ async function cargarRutasParaDatalist() {
 }
 
 async function asignarTarea() {
-    const placa = document.getElementById("placaSelect").value;
-    const sector = document.getElementById("sectorInput").value;
-    const turno = document.getElementById("turnoSelect").value;
-    
-    const fechaStr = document.getElementById("fechaInput").value;
-    const [year, month, day] = fechaStr.split('-').map(Number);
-    const fecha = new Date(Date.UTC(year, month - 1, day)).toISOString();
+    const placa = document.getElementById("placa").value;
+    const sector = document.getElementById("sector").value;
+    const turno = document.getElementById("turno").value;
+    const fecha = document.getElementById("fecha").value;
+    const userId = localStorage.getItem('anonUserId');
 
-    if (!placa || !sector || !fecha) {
-        alert("Placa, sector y fecha son campos obligatorios");
+    // 💡 Aquí se agregan el título y la descripción
+    const titulo = `Tarea para ${placa} - ${sector}`;
+    const descripcion = `Limpieza y recolección en el sector ${sector} en el turno ${turno} del ${fecha}.`;
+
+    // 💡 Se obtiene el rutaId antes de continuar
+    const rutaId = await obtenerRutaIdPorNombre(sector);
+
+    if (!placa || !sector || !turno || !fecha || !userId || !rutaId) {
+        alert("Todos los campos (placa, sector, turno, fecha) son obligatorios.");
         return;
     }
-    
-    const res = await fetch(`${API}/tareas`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ placa, sector, turno, fecha, userId })
-    });
 
-    const data = await res.json();
-    if (data.ok) alert("Tarea asignada ✅");
-    cargarTareas();
+    try {
+        const res = await fetch(`${API}/tareas`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ titulo, descripcion, placa, sector, turno, fecha, userId, rutaId })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            alert("Tarea asignada con éxito.");
+            cargarTareas();
+        } else {
+            console.error(data);
+            alert(`Error al asignar la tarea: ${data.error}`);
+        }
+    } catch (err) {
+        console.error("Error al asignar la tarea:", err);
+        alert("Error de conexión. Intenta de nuevo más tarde.");
+    }
 }
 
 async function cargarTareas() {
@@ -228,6 +243,22 @@ async function cargarTareas() {
     } catch (error) {
         console.error("Error al cargar las tareas:", error);
         tbody.innerHTML = "<tr><td colspan='6'>Error al cargar las tareas. Revisa la consola para más detalles.</td></tr>";
+    }
+}
+
+// Agrega esta función a tu archivo admin (13).js para buscar el ID de la ruta
+async function obtenerRutaIdPorNombre(nombreRuta) {
+    try {
+        const res = await fetch(`${API}/rutas`);
+        if (!res.ok) {
+            throw new Error(`HTTP error! Status: ${res.status}`);
+        }
+        const rutas = await res.json();
+        const rutaEncontrada = rutas.find(r => r.nombre === nombreRuta);
+        return rutaEncontrada ? rutaEncontrada._id : null;
+    } catch (error) {
+        console.error("Error al obtener el ID de la ruta:", error);
+        return null;
     }
 }
 
