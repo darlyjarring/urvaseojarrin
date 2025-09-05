@@ -64,13 +64,13 @@ async function cargarPlacas() {
 
     placas.forEach((p, i) => {
         const tr = document.createElement("tr");
-        const estadoTexto = p.activo ? "Activa" : "Inactiva";
-        const estadoClase = p.activo ? "status-active" : "status-inactive";
+        const estadoTexto = p.estado ? "Activa" : "Inactiva";
+        const estadoClase = p.estado ? "status-active" : "status-inactive";
         tr.innerHTML = `
             <td>${i + 1}</td>
             <td>${p.placa}</td>
             <td class="${estadoClase}">${estadoTexto}</td>
-            <td><button class="btn btn-sm btn-info" onclick="editarPlaca('${p._id}', ${p.activo})">Editar</button></td>
+            <td><button class="btn btn-sm btn-info" onclick="editarPlaca('${p._id}', ${p.estado})">Editar</button></td>
         `;
         tablaPlacasBody.appendChild(tr);
     });
@@ -78,7 +78,7 @@ async function cargarPlacas() {
 
 async function registrarPlaca() {
     const placa = document.getElementById("nuevaPlaca").value.trim();
-    const activo = document.getElementById("estadoPlaca").value === "true";
+    const estado = document.getElementById("estadoPlaca").value === "true";
 
     if (!placa) {
         alert("Debe ingresar una placa");
@@ -88,7 +88,7 @@ async function registrarPlaca() {
     const res = await fetch(`${API}/placas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ placa, estado: activo ? "activo" : "inactivo" })
+        body: JSON.stringify({ placa, estado: estado ? "activo" : "inactivo" })
     });
 
     if (res.ok) {
@@ -108,11 +108,11 @@ async function editarPlaca(id, estadoActual) {
         return;
     }
 
-    const activo = nuevoEstadoLower === "activo";
+    const estado  = nuevoEstadoLower === "activo";
     await fetch(`${API}/placas/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ estado: activo ? "activo" : "inactivo" })
+        body: JSON.stringify({ estado: estado ? "activo" : "inactivo" })
     });
     cargarPlacas();
 }
