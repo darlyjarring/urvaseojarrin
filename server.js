@@ -262,47 +262,44 @@ app.put("/rutas/:rutaId/puntos/:puntoId", async (req, res) => {
 
 // Endpoint para crear tareas
 app.post("/tareas", async (req, res) => {
-  try {
-    const { titulo, descripcion, placa, sector, turno, rutaId, userId } = req.body;
-    
-    // ✅ La validación solo verifica los campos obligatorios del modelo.
-    if (!placa || !sector || !turno || !rutaId) {
-        return res.status(400).json({ error: "Placa, sector, turno y rutaId son obligatorios." });
+    try {
+        const { titulo, descripcion, placa, sector, turno, rutaId, userId, fecha } = req.body;
+        
+        if (!placa || !sector || !turno || !rutaId) {
+            return res.status(400).json({ error: "Placa, sector, turno y rutaId son obligatorios." });
+        }
+
+        const ruta = await Ruta.findById(rutaId);
+        if (!ruta) {
+            return res.status(404).json({ error: "Ruta no encontrada." });
+        }
+
+        const estados_detareaxelemntoderuta = ruta.puntos.map(punto => ({
+            puntoId: punto._id,
+            estado: "pendiente"
+        }));
+        
+        // ✅ Corregido: Usamos la fecha que viene en el cuerpo de la solicitud (req.body)
+        const nuevaTarea = new Tarea({
+            placa,
+            sector,
+            turno,
+            fecha, // <-- ¡Aquí está la corrección!
+            rutaId,
+            titulo,
+            descripcion,
+            userId,
+            estados_detareaxelemntoderuta
+        });
+        
+        await nuevaTarea.save();
+
+        res.status(201).json({ ok: true, msg: "Tarea creada", tarea: nuevaTarea });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Error creando la tarea" });
     }
-
-    // Buscar la ruta para inicializar el estado de los puntos
-    const ruta = await Ruta.findById(rutaId);
-    if (!ruta) {
-        return res.status(404).json({ error: "Ruta no encontrada." });
-    }
-
-    const estados_detareaxelemntoderuta = ruta.puntos.map(punto => ({
-        puntoId: punto._id,
-        estado: "pendiente"
-    }));
-    
-    // ✅ Incluimos los nuevos campos en la creación de la tarea
-    const nuevaTarea = new Tarea({
-        placa,
-        sector,
-        turno,
-        fecha: new Date(),
-        rutaId,
-        titulo,
-        descripcion,
-        userId,
-        estados_detareaxelemntoderuta
-    });
-    
-    await nuevaTarea.save();
-
-    res.status(201).json({ ok: true, msg: "Tarea creada", tarea: nuevaTarea });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Error creando la tarea" });
-  }
 });
-
 app.get("/tareas", async (req, res) => {
   try {
     const tareas = await Tarea.find({});
