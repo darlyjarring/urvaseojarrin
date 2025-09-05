@@ -37,7 +37,7 @@ async function registrarPlaca() {
   const res = await fetch(`${API}/placas`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ placa, activo })
+    body: JSON.stringify({ placa, estado: activo ? "activo" : "inactivo" })
   });
 
   if (res.ok) {
@@ -67,7 +67,7 @@ async function editarPlaca(id, estadoActual) {
   await fetch(`${API}/placas/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ activo })
+     JSON.stringify({ estado: activo ? "activo" : "inactivo" })
   });
 
   cargarPlacas();
