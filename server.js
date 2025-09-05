@@ -420,6 +420,77 @@ app.post("/reportes", async (req, res) => {
   }
 });
 
+// Endpoint para obtener la tarea de un chofer por placa y turno
+app.get("/tareas/chofer/:placa/:turno", async (req, res) => {
+    try {
+        const { placa, turno } = req.params;
+        const fechaHoy = new Date().toISOString().split('T')[0]; // Obtiene la fecha de hoy en formato YYYY-MM-DD
+        
+        const tarea = await Tarea.findOne({
+            placa,
+            turno,
+            fecha: { 
+                $gte: new Date(fechaHoy + 'T00:00:00.000Z'),
+                $lt: new Date(fechaHoy + 'T23:59:59.999Z')
+            }
+        }).populate({
+            path: 'rutaId',
+            populate: {
+                path: 'puntos',
+                model: 'Punto'
+            }
+        });
+
+        if (!tarea) {
+            return res.status(404).json({ error: "No se encontró ninguna tarea para la placa y turno de hoy." });
+        }
+
+        res.status(200).json(tarea);
+    } catch (err) {
+        console.error("Error al obtener la tarea del chofer:", err);
+        res.status(500).json({ error: "Error interno del servidor." });
+    }
+});
+
+// Endpoint para actualizar el estado de un punto en una tarea
+app.put("/tareas/:tareaId/puntos/:puntoId", async (req, res) => {
+    try {
+        const { tareaId, puntoId } = req.params;
+        const { estado } = req.body;
+
+        const tarea = await Tarea.findById(tareaId);
+        if (!tarea) {
+            return res.status(404).json({ error: "Tarea no encontrada." });
+        }
+
+        const puntoEnTarea = tarea.estados_detareaxelemntoderuta.find(p => p.puntoId.toString() === puntoId);
+        if (!puntoEnTarea) {
+            return res.status(404).json({ error: "Punto no encontrado en la tarea." });
+        }
+
+        puntoEnTarea.estado = estado;
+        await tarea.save();
+
+        res.status(200).json({ ok: true, msg: "Estado del punto actualizado." });
+    } catch (err) {
+        console.error("Error al actualizar el estado del punto:", err);
+        res.status(500).json({ error: "Error interno del servidor." });
+    }
+});
+
+// Endpoint para reportar una observación
+app.post("/observaciones", async (req, res) => {
+    try {
+        const { chofer, tarea, punto, descripcion } = req.body;
+        // Aquí puedes guardar esta observación en una nueva colección de tu base de datos si lo deseas.
+        // Por ahora, solo responderemos que la novedad fue recibida con éxito.
+        console.log("Nueva observación recibida:", req.body);
+        res.status(201).json({ ok: true, msg: "Observación enviada con éxito." });
+    } catch (err) {
+        console.error("Error al recibir la observación:", err);
+        res.status(500).json({ error: "Error al procesar la observación." });
+    }
+});
 // -------------------- PUERTO --------------------
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`🚀 Backend corriendo en puerto ${PORT}`));
