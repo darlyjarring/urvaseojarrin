@@ -124,7 +124,11 @@ async function cargarPlacasParaSelect() {
     const placas = await res.json();
     const placaSelect = document.getElementById("placaSelect");
     placaSelect.innerHTML = "";
-    placas.forEach(p => {
+    
+    // ✅ CORRECCIÓN: Filtramos las placas para mostrar solo las que están activas
+    const placasActivas = placas.filter(p => p.estado === "activo");
+
+    placasActivas.forEach(p => {
         const option = document.createElement("option");
         option.value = p.placa;
         option.text = p.placa;
