@@ -263,38 +263,40 @@ app.put("/rutas/:rutaId/puntos/:puntoId", async (req, res) => {
 // Endpoint para crear tareas
 app.post("/tareas", async (req, res) => {
   try {
-    const { titulo, descripcion, placa, sector, turno, rutaId } = req.body;
-
-    // Validación de campos obligatorios
-    if (!titulo || !descripcion || !placa || !sector || !turno || !rutaId) {
-      return res.status(400).json({ error: "Todos los campos (título, descripción, placa, sector, turno y rutaId) son obligatorios." });
-    }
+    const { titulo, descripcion, placa, sector, turno, rutaId, userId } = req.body;
     
-    // Buscar la ruta para obtener sus puntos
+    // ✅ La validación solo verifica los campos obligatorios del modelo.
+    if (!placa || !sector || !turno || !rutaId) {
+        return res.status(400).json({ error: "Placa, sector, turno y rutaId son obligatorios." });
+    }
+
+    // Buscar la ruta para inicializar el estado de los puntos
     const ruta = await Ruta.findById(rutaId);
     if (!ruta) {
-      return res.status(404).json({ error: "La ruta especificada no existe." });
+        return res.status(404).json({ error: "Ruta no encontrada." });
     }
 
-    // Mapear los puntos de la ruta para crear los estados de la tarea
     const estados_detareaxelemntoderuta = ruta.puntos.map(punto => ({
-      puntoId: punto._id,
-      estado: 'Pendiente'
+        puntoId: punto._id,
+        estado: "pendiente"
     }));
-
+    
+    // ✅ Incluimos los nuevos campos en la creación de la tarea
     const nuevaTarea = new Tarea({
-      titulo,
-      descripcion,
-      placa,
-      sector,
-      turno,
-      rutaId,
-      estado: "Pendiente", // estado inicial
-      estados_detareaxelemntoderuta
+        placa,
+        sector,
+        turno,
+        fecha: new Date(),
+        rutaId,
+        titulo,
+        descripcion,
+        userId,
+        estados_detareaxelemntoderuta
     });
     
     await nuevaTarea.save();
-    res.status(201).json(nuevaTarea);
+
+    res.status(201).json({ ok: true, msg: "Tarea creada", tarea: nuevaTarea });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error creando la tarea" });
