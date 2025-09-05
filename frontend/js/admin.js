@@ -197,6 +197,8 @@ async function cargarTareas() {
     try {
         const filtroFechaStr = document.getElementById("filtroFecha").value;
         const filtroTurno = document.getElementById("filtroTurno").value;
+        
+        tbody.innerHTML = "<tr><td colspan='7'>Cargando tareas...</td></tr>";
 
         const res = await fetch(`${API}/tareas`);
         if (!res.ok) {
@@ -204,6 +206,7 @@ async function cargarTareas() {
         }
         let tareas = await res.json();
         
+        // ✅ Lógica de filtrado
         if (filtroFechaStr) {
             const [year, month, day] = filtroFechaStr.split('-').map(Number);
             const dateToFilter = new Date(Date.UTC(year, month - 1, day)).toISOString().split('T')[0];
@@ -218,6 +221,7 @@ async function cargarTareas() {
             tareas = tareas.filter(t => t.turno === filtroTurno);
         }
         
+        // ✅ Se añade la columna de Porcentaje
         thead.innerHTML = `
             <tr>
                 <th>Placa</th>
@@ -225,33 +229,61 @@ async function cargarTareas() {
                 <th>Turno</th>
                 <th>Fecha</th>
                 <th>Estado</th>
+                <th>Avance</th>
                 <th>Usuario</th>
+                <th>Acciones</th>
             </tr>
         `;
         tbody.innerHTML = "";
 
-        tareas.forEach(t => {
-            const tr = document.createElement("tr");
+        if (tareas.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='8'>No hay tareas que coincidan con los filtros.</td></tr>";
+            return;
+        }
+
+        // ✅ Lógica para calcular y mostrar el estado y porcentaje
+        tareas.forEach(tarea => {
+            let estadoGeneral = "Pendiente";
+            let porcentajeCompletado = 0;
+            const totalPuntos = tarea.estados_detareaxelemntoderuta.length;
             
-            const fechaObj = new Date(t.fecha);
+            if (totalPuntos > 0) {
+                const puntosEjecutados = tarea.estados_detareaxelemntoderuta.filter(p => p.estado === 'ejecutada').length;
+                porcentajeCompletado = (puntosEjecutados / totalPuntos) * 100;
+
+                if (porcentajeCompletado === 100) {
+                    estadoGeneral = "Terminada";
+                } else if (porcentajeCompletado > 0) {
+                    estadoGeneral = "En Proceso";
+                } else {
+                    estadoGeneral = "Pendiente";
+                }
+            }
+            
+            const tr = document.createElement("tr");
+            const fechaObj = new Date(tarea.fecha);
             const year = fechaObj.getUTCFullYear();
             const month = String(fechaObj.getUTCMonth() + 1).padStart(2, '0');
             const day = String(fechaObj.getUTCDate()).padStart(2, '0');
             const fecha = `${day}/${month}/${year}`;
-            
+
             tr.innerHTML = `
-                <td>${t.placa}</td>
-                <td>${t.sector}</td>
-                <td>${t.turno}</td>
+                <td>${tarea.placa}</td>
+                <td>${tarea.sector}</td>
+                <td>${tarea.turno}</td>
                 <td>${fecha}</td>
-                <td>${t.estado}</td>
-                <td>${t.userId || 'N/A'}</td>
+                <td>${estadoGeneral}</td>
+                <td>${porcentajeCompletado.toFixed(0)}%</td>
+                <td>${tarea.userId || 'N/A'}</td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="mostrarPuntos('${tarea._id}')">Ver Puntos</button>
+                </td>
             `;
             tbody.appendChild(tr);
         });
     } catch (error) {
         console.error("Error al cargar las tareas:", error);
-        tbody.innerHTML = "<tr><td colspan='6'>Error al cargar las tareas. Revisa la consola para más detalles.</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='8'>Error al cargar las tareas. Revisa la consola para más detalles.</td></tr>";
     }
 }
 
