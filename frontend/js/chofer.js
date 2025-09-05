@@ -1,5 +1,4 @@
 const API = "https://urvaseo-backend.onrender.com";
-
 const choferId = localStorage.getItem("choferId");
 const placa = localStorage.getItem("placa");
 const turno = localStorage.getItem("turno");
@@ -9,219 +8,166 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
 let markers = [];
 let polyline = null;
-let rutaIdActual = null;
+let tareaActual = null; // Almacenaremos la tarea completa aquí
 
 // --- Definición de Íconos SVG Personalizados ---
 const getIcon = (color) => {
     return L.divIcon({
         className: 'custom-div-icon',
-        html: `<div style="color: ${color}; font-size: 24px; position: relative;"><i class="fas fa-map-marker-alt"></i></div>`,
+        html: `<div style=\"color: ${color}; font-size: 24px; position: relative;\"><i class=\"fas fa-map-marker-alt\"></i></div>`,
         iconSize: [25, 41],
         iconAnchor: [12, 41],
         popupAnchor: [1, -34],
     });
 };
 
-const pendienteIcon = getIcon('blue');
-const enProcesoIcon = getIcon('orange');
-const completadaIcon = getIcon('green');
-const danadoIcon = getIcon('red');
+const estadoIconos = {
+    "pendiente": getIcon('blue'),
+    "en proceso": getIcon('orange'),
+    "ejecutada": getIcon('green'),
+    "terminada": getIcon('green')
+};
 
 // --- Lógica principal ---
 document.addEventListener("DOMContentLoaded", () => {
-  if (choferId && placa && turno) {
-    cargarTareas();
-  } else {
-    alert("No se encontró información del chofer. Inicia sesión de nuevo.");
-    window.location.href = "index.html";
-  }
+    if (placa && turno) {
+        cargarTareas();
+    } else {
+        alert("No se encontró información del chofer. Inicia sesión de nuevo.");
+        window.location.href = "index.html";
+    }
 });
 
 async function cargarTareas() {
-  try {
-    const res = await fetch(`${API}/tareas?placa=${placa}&turno=${turno}`);
-    if (!res.ok) {
-        throw new Error("Error al obtener tareas del servidor");
-    }
+    try {
+        const res = await fetch(`${API}/tareas/chofer/${placa}/${turno}`);
+        if (!res.ok) {
+            if (res.status === 404) {
+                document.getElementById('tareas-lista').innerHTML = "<p>No tienes tareas asignadas para este turno y fecha.</p>";
+                return;
+            }
+            throw new Error(`Error al cargar las tareas: ${res.statusText}`);
+        }
+        tareaActual = await res.json();
+        
+        mostrarDetalleTarea();
+        actualizarMapa();
 
-    const tareasAsignadas = await res.json();
-    if (tareasAsignadas.length === 0) {
-      document.getElementById("message").innerText = "No tienes tareas asignadas para este turno.";
-      return;
+    } catch (err) {
+        console.error("Error al cargar las tareas:", err);
+        alert("Error al cargar las tareas. Revisa la consola.");
     }
-    
-    const tarea = tareasAsignadas[0];
-    const puntosRuta = tarea.rutaId.puntos;
-    rutaIdActual = tarea.rutaId._id;
-    
-    dibujarRecorrido(puntosRuta);
-    dibujarPuntos(puntosRuta, tarea.estados_detareaxelemntoderuta);
-    dibujarTabla(puntosRuta, tarea.estados_detareaxelemntoderuta);
-    
-  } catch (err) {
-    console.error("Error al cargar tareas:", err);
-    alert("No se pudieron cargar las tareas.");
-  }
 }
 
-function dibujarRecorrido(puntos) {
-  if (polyline) {
-    map.removeLayer(polyline);
-  }
-  const latlngs = puntos.map(p => [p.lat, p.lng]);
-  polyline = L.polyline(latlngs, { color: 'blue', weight: 5, opacity: 0.7 }).addTo(map);
-  map.fitBounds(polyline.getBounds());
-}
+function mostrarDetalleTarea() {
+    if (!tareaActual) return;
 
-function dibujarPuntos(puntosRuta, estadosPuntos) {
-  markers.forEach(marker => map.removeLayer(marker));
-  markers = [];
-  
-  puntosRuta.forEach((p, i) => {
-    const estadoEnTarea = estadosPuntos.find(e => e.puntoId === p._id);
-    let icon;
-    const estadoMinusculas = (estadoEnTarea?.estado || p.estado).toLowerCase();
-    
-    switch (estadoMinusculas) {
-      case "en proceso":
-        icon = enProcesoIcon;
-        break;
-      case "ejecutada":
-      case "terminada":
-        icon = completadaIcon;
-        break;
-      case "dañado":
-        icon = danadoIcon;
-        break;
-      default:
-        icon = pendienteIcon;
-    }
-    
-    const marker = L.marker([p.lat, p.lng], { icon: icon }).addTo(map);
+    const listaContainer = document.getElementById('tareas-lista-container');
+    listaContainer.innerHTML = ""; // Limpia el contenedor
 
-    marker.on('dblclick', (e) => {
-      if (estadoMinusculas === 'ejecutada' || estadoMinusculas === 'terminada') {
-        alert("No se puede reportar una novedad en un punto ya terminado.");
-      } else {
-        reportarNovedad(p._id, p.lat, p.lng);
-      }
-    });
+    // Título de la ruta
+    const titulo = document.createElement("h3");
+    titulo.textContent = tareaActual.rutaId.nombre;
+    listaContainer.appendChild(titulo);
 
-    marker.on('click', async (e) => {
-      const estadoActual = (estadosPuntos.find(e => e.puntoId === p._id)?.estado || p.estado).toLowerCase();
+    // Lista de puntos
+    const ul = document.createElement("ul");
+    ul.className = "list-unstyled";
 
-      let popupContent = `
-        <b>Punto ${i + 1}</b><br>
-        Nombre: ${p.nombre}<br>
-        Dirección: ${p.direccion}<br>
-        Estado de la tarea: ${estadoActual}
-        <hr>
-      `;
+    tareaActual.estados_detareaxelemntoderuta.forEach(puntoEstado => {
+        const punto = tareaActual.rutaId.puntos.find(p => p._id === puntoEstado.puntoId);
+        if (!punto) return; // Asegura que el punto exista
 
-      if (estadoActual === 'pendiente') {
-        // Primer clic: cambia el estado a 'en proceso'
-        await marcarPunto(p._id, 'en proceso');
-        // Actualizar el ícono y el popup inmediatamente en el frontend
-        marker.setIcon(enProcesoIcon);
-        marker.setPopupContent(`
-          <b>Punto ${i + 1}</b><br>
-          Nombre: ${p.nombre}<br>
-          Dirección: ${p.direccion}<br>
-          Estado de la tarea: en proceso
-          <hr>
-          <button onclick="marcarPunto('${p._id}', 'ejecutada')" style="background-color: #28a745; color: white;">Marcar como terminada</button>
-        `).openPopup();
-      } else if (estadoActual === 'en proceso') {
-        // Segundo clic: muestra el popup para finalizar la tarea
-        popupContent += `
-          <button onclick="marcarPunto('${p._id}', 'ejecutada')" style="background-color: #28a745; color: white;">Marcar como terminada</button>
+        const li = document.createElement("li");
+        li.className = "punto-item";
+        li.innerHTML = `
+            <strong>${punto.nombre}</strong> - Estado: ${puntoEstado.estado}
+            <div class="btn-group" role="group">
+                <button class="btn btn-sm btn-outline-warning" onclick="marcarPunto('${tareaActual._id}', '${puntoEstado.puntoId}', 'en proceso')">En Proceso</button>
+                <button class="btn btn-sm btn-outline-success" onclick="marcarPunto('${tareaActual._id}', '${puntoEstado.puntoId}', 'ejecutada')">Terminada</button>
+                <button class="btn btn-sm btn-outline-info" onclick="reportarObservacion('${tareaActual._id}', '${puntoEstado.puntoId}')">Observación</button>
+            </div>
         `;
-        marker.setPopupContent(popupContent).openPopup();
-      } else if (estadoActual === 'ejecutada' || estadoActual === 'terminada') {
-        // Si ya está terminada, muestra un mensaje de confirmación
-        popupContent = `<span>Este punto ya ha sido completado ✅</span>`;
-        marker.setPopupContent(popupContent).openPopup();
-      } else {
-        // Para cualquier otro estado, muestra el popup sin botones de acción
-        marker.setPopupContent(popupContent).openPopup();
-      }
+        ul.appendChild(li);
     });
-    
-    markers.push(marker);
-  });
+
+    listaContainer.appendChild(ul);
 }
 
-function dibujarTabla(puntosRuta, estadosPuntos) {
-  const tbody = document.querySelector("#tareas-tabla tbody");
-  if (!tbody) return;
-  tbody.innerHTML = "";
-  puntosRuta.forEach((p, i) => {
-    const estadoEnTarea = estadosPuntos.find(e => e.puntoId === p._id);
-    const estadoActual = (estadoEnTarea?.estado || p.estado);
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${i + 1}</td>
-      <td>${p.nombre}</td>
-      <td>${p.direccion}</td>
-      <td>${estadoActual}</td>
-    `;
-    tbody.appendChild(tr);
-  });
+function actualizarMapa() {
+    if (!tareaActual || !tareaActual.rutaId || !tareaActual.rutaId.puntos) return;
+
+    // Limpia marcadores y polilínea anteriores
+    markers.forEach(m => map.removeLayer(m));
+    if (polyline) map.removeLayer(polyline);
+    markers = [];
+
+    const puntosRuta = tareaActual.rutaId.puntos.map(p => [p.lat, p.lng]);
+    const estadosPuntos = tareaActual.estados_detareaxelemntoderuta;
+
+    // Agrega marcadores con el icono correcto según el estado
+    puntosRuta.forEach((punto, index) => {
+        const estadoPunto = estadosPuntos[index].estado;
+        const icon = estadoIconos[estadoPunto] || estadoIconos["pendiente"];
+        const puntoData = tareaActual.rutaId.puntos[index];
+
+        const marker = L.marker(punto, { icon }).addTo(map)
+            .bindPopup(`<b>${puntoData.nombre}</b><br>Estado: ${estadoPunto}`);
+        markers.push(marker);
+    });
+
+    // Dibuja la polilínea
+    polyline = L.polyline(puntosRuta, { color: 'blue' }).addTo(map);
+
+    // Ajusta la vista del mapa para que se adapte a la ruta
+    map.fitBounds(polyline.getBounds());
 }
 
-async function reportarNovedad(puntoId, lat, lng) {
-  const novedad = prompt("¿Qué tipo de novedad desea reportar? (Ej: daño, robo, accidente)");
-  if (!novedad) return;
-
-  const descripcion = prompt("Describa el incidente (opcional):");
-
-  const data = {
-    choferId,
-    placa,
-    novedad,
-    descripcion,
-    ubicacion: { lat: parseFloat(lat), lng: parseFloat(lng) },
-  };
-
-  try {
-    const res = await fetch(`${API}/reporte`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    const result = await res.json();
-    if (result.ok) {
-      alert("Reporte enviado con éxito ✅");
-      await marcarPunto(puntoId, 'dañado');
-    } else {
-      alert("Error al enviar el reporte.");
+async function marcarPunto(tareaId, puntoId, nuevoEstado) {
+    try {
+        const res = await fetch(`${API}/tareas/${tareaId}/puntos/${puntoId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ estado: nuevoEstado }),
+        });
+        if (res.ok) {
+            await res.json();
+            alert("Estado de la tarea actualizado con éxito.");
+            cargarTareas(); // Recarga las tareas para reflejar los cambios
+        } else {
+            throw new Error("Error al actualizar el estado del punto.");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Error al actualizar el estado. Intenta de nuevo más tarde.");
     }
-  } catch (err) {
-    console.error(err);
-    alert("Error de conexión. Intenta de nuevo más tarde.");
-  }
 }
 
-async function marcarPunto(puntoId, nuevoEstado) {
-  if (!rutaIdActual) {
-    return alert("Error: No se encontró el ID de la ruta.");
-  }
+async function reportarObservacion(tareaId, puntoId) {
+    const descripcion = prompt("Por favor, describe la observación:");
+    if (!descripcion) return;
 
-  try {
-    const res = await fetch(`${API}/rutas/${rutaIdActual}/puntos/${puntoId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ estado: nuevoEstado }),
-    });
-    const result = await res.json();
-    if (result.ok) {
-      alert(`Punto marcado como: ${nuevoEstado}`);
-      cargarTareas();
-    } else {
-      alert("Error al actualizar el estado del punto.");
+    const data = {
+        chofer: choferId,
+        tarea: tareaId,
+        punto: puntoId,
+        descripcion,
+    };
+
+    try {
+        const res = await fetch(`${API}/observaciones`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+        });
+        const result = await res.json();
+        if (result.ok) {
+            alert("Observación enviada con éxito ✅");
+        } else {
+            alert("Error al enviar la observación.");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Error de conexión. Intenta de nuevo más tarde.");
     }
-  } catch (err) {
-    console.error(err);
-    alert("Error de conexión. Intenta de nuevo más tarde.");
-  }
 }
