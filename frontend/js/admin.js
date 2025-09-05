@@ -143,17 +143,19 @@ async function cargarRutasParaDatalist() {
 }
 
 async function asignarTarea() {
-    const placa = document.getElementById("placa").value;
-    const sector = document.getElementById("sector").value;
-    const turno = document.getElementById("turno").value;
-    const fecha = document.getElementById("fecha").value;
+    // ✅ CORRECCIÓN: Usamos los IDs correctos de tu archivo HTML
+    const placa = document.getElementById("placaSelect").value;
+    const sector = document.getElementById("sectorInput").value;
+    const turno = document.getElementById("turnoSelect").value;
+    const fecha = document.getElementById("fechaInput").value;
     const userId = localStorage.getItem('anonUserId');
 
-    // 💡 Aquí se agregan el título y la descripción
+    // Generamos el título y la descripción
     const titulo = `Tarea para ${placa} - ${sector}`;
     const descripcion = `Limpieza y recolección en el sector ${sector} en el turno ${turno} del ${fecha}.`;
 
-    // 💡 Se obtiene el rutaId antes de continuar
+    // Asume que ya tienes la función 'obtenerRutaIdPorNombre' definida
+    // Si no la tienes, asegúrate de agregarla.
     const rutaId = await obtenerRutaIdPorNombre(sector);
 
     if (!placa || !sector || !turno || !fecha || !userId || !rutaId) {
@@ -165,6 +167,7 @@ async function asignarTarea() {
         const res = await fetch(`${API}/tareas`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            // Enviamos los campos obligatorios al servidor
             body: JSON.stringify({ titulo, descripcion, placa, sector, turno, fecha, userId, rutaId })
         });
 
