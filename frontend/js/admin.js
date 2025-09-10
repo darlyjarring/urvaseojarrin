@@ -177,7 +177,12 @@ async function asignarTarea() {
             if (fechaInput) fechaInput.value = "";
             
             // Vuelve a cargar la lista de placas para reflejar el cambio
-            cargarPlacasParaSelect(fecha, turno);
+            const fecha = fechaInput.value;
+            const turno = turnoSelect.value;
+            if (fecha && turno) {
+                cargarPlacasParaSelect(fecha, turno);
+            }
+            
             cargarTareas();
         } else {
             const error = await res.json();
