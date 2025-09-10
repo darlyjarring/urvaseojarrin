@@ -181,8 +181,7 @@ async function asignarTarea() {
         if (res.ok) {
             alert("Tarea asignada con éxito ✅");
              // ✅ NUEVO: Lógica para limpiar los campos del formulario
-            document.getElementById("placaSelect").value = "";
-            document.getElementById("rutaDatalist").value = "";
+            document.getElementById("placaSelect").value = "";          
             document.getElementById("sectorInput").value = "";
             cargarTareas();
         } else {
