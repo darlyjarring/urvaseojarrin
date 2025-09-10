@@ -38,10 +38,59 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Cargar la sección inicial
     cargarPlacas();
+    
+//añadido para poner placas por turno y q no se repitan
+    const filtroFechaInput = document.getElementById("fechaInput");
+    const filtroTurnoSelect = document.getElementById("turnoSelect");
 
+    filtroFechaInput.addEventListener('change', () => {
+        const fecha = filtroFechaInput.value;
+        const turno = filtroTurnoSelect.value;
+        if (fecha && turno) {
+            cargarPlacasParaSelect(fecha, turno);
+        }
+    });
+
+    filtroTurnoSelect.addEventListener('change', () => {
+        const fecha = filtroFechaInput.value;
+        const turno = filtroTurnoSelect.value;
+        if (fecha && turno) {
+            cargarPlacasParaSelect(fecha, turno);
+        }
+    });
+    // fin placas por turno y no se repitan
+
+    
     const filtroFechaInput = document.getElementById("filtroFecha");
     const filtroTurnoSelect = document.getElementById("filtroTurno");
     const botonReplicar = document.getElementById("btnReplicarTurno");
+
+    //añadido placa no repetir
+     const selectPlaca = document.getElementById("placaSelect");
+     let placasDisponibles = [];
+
+     async function cargarPlacasParaSelect(fecha, turno) {
+        try {
+            const res = await fetch(`${API}/placas-disponibles?fecha=${fecha}&turno=${turno}`);
+            if (!res.ok) {
+                throw new Error("Error al cargar placas disponibles");
+            }
+            const placas = await res.json();
+            selectPlaca.innerHTML = "<option value=''>Seleccione una placa</option>";
+            placasDisponibles = placas;
+            placas.forEach(p => {
+                const option = document.createElement("option");
+                option.value = p._id;
+                option.textContent = p.placa;
+                selectPlaca.appendChild(option);
+            });
+        } catch (err) {
+            console.error(err);
+            alert("Error al cargar las placas disponibles.");
+        }
+    }
+    // fin añadido placa no repetir
+    
     
     if (filtroFechaInput && filtroTurnoSelect) {
         filtroFechaInput.addEventListener('change', cargarTareas);
@@ -183,6 +232,13 @@ async function asignarTarea() {
              // ✅ NUEVO: Lógica para limpiar los campos del formulario
             document.getElementById("placaSelect").value = "";          
             document.getElementById("sectorInput").value = "";
+            // Vuelve a cargar la lista de placas para reflejar el cambio**inicio
+        const fecha = document.getElementById("fechaInput").value;
+        const turno = document.getElementById("turnoSelect").value;
+        if (fecha && turno) {
+            cargarPlacasParaSelect(fecha, turno);
+        }
+            //  ***fin
             cargarTareas();
         } else {
             console.error(data);
