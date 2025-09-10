@@ -179,7 +179,11 @@ async function asignarTarea() {
 
         const data = await res.json();
         if (res.ok) {
-            alert("Tarea asignada con éxito.");
+            alert("Tarea asignada con éxito ✅");
+             // ✅ NUEVO: Lógica para limpiar los campos del formulario
+            document.getElementById("placaSelect").value = "";
+            document.getElementById("rutaDatalist").value = "";
+            document.getElementById("sectorInput").value = "";
             cargarTareas();
         } else {
             console.error(data);
