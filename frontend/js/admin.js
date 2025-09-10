@@ -40,8 +40,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     cargarPlacas();
     
 //añadido para poner placas por turno y q no se repitan
-    const filtroFechaInput = document.getElementById("fechaInput");
-    const filtroTurnoSelect = document.getElementById("turnoSelect");
+    //const filtroFechaInput = document.getElementById("fechaInput");
+  //  const filtroTurnoSelect = document.getElementById("turnoSelect");
+    const filtroFechaInput = document.getElementById("filtroFecha");
+    const filtroTurnoSelect = document.getElementById("filtroTurno")
+    const botonReplicar = document.getElementById("btnReplicarTurno");;
+
+    //añadido placa no repetir
+     const selectPlaca = document.getElementById("placaSelect");
 
     filtroFechaInput.addEventListener('change', () => {
         const fecha = filtroFechaInput.value;
@@ -62,8 +68,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     
     const filtroFechaInput = document.getElementById("filtroFecha");
-    const filtroTurnoSelect = document.getElementById("filtroTurno");
-    const botonReplicar = document.getElementById("btnReplicarTurno");
+    const filtroTurnoSelect = document.getElementById("filtroTurno")
+    const botonReplicar = document.getElementById("btnReplicarTurno");;
 
     //añadido placa no repetir
      const selectPlaca = document.getElementById("placaSelect");
