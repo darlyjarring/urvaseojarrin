@@ -199,29 +199,40 @@ app.get("/placas-activas", async (req, res) => {
 
 // Endpoint para crear rutas
 app.post("/rutas", async (req, res) => {
-  try {
-    const { nombre, puntos } = req.body;
-    const nuevaRuta = new Ruta({
-      nombre,
-      puntos,
-    });
-    await nuevaRuta.save();
-    res.status(201).json(nuevaRuta);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Error creando la ruta" });
-  }
+    try {
+        const { nombre, puntos } = req.body;
+        
+        // Validar que se reciba el nombre y los puntos
+        if (!nombre || !puntos || puntos.length === 0) {
+            return res.status(400).json({ error: "Faltan datos obligatorios: nombre o puntos." });
+        }
+
+        const nuevaRuta = new Ruta({
+            nombre,
+            puntos,
+        });
+
+        const rutaGuardada = await nuevaRuta.save();
+        res.status(201).json({ ok: true, msg: "Ruta creada con éxito.", ruta: rutaGuardada });
+    } catch (err) {
+        console.error("Error al crear la ruta:", err);
+        // Envía un error más específico si es un problema de validación de Mongoose
+        if (err.name === 'ValidationError') {
+            return res.status(400).json({ error: "Datos de ruta inválidos.", detalles: err.message });
+        }
+        res.status(500).json({ error: "Error creando la ruta" });
+    }
 });
 
 // Endpoint para obtener rutas
 app.get("/rutas", async (req, res) => {
-  try {
-    const rutas = await Ruta.find({});
-    res.json(rutas);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Error obteniendo las rutas" });
-  }
+    try {
+        const rutas = await Ruta.find({});
+        res.json(rutas);
+    } catch (err) {
+        console.error("Error al obtener las rutas:", err);
+        res.status(500).json({ error: "Error obteniendo las rutas." });
+    }
 });
 
 // Endpoint para actualizar el estado de una ruta
